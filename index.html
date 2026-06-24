@@ -152,8 +152,29 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 1
       <select id="tzSelect" onchange="changeTZ(this.value)"></select>
     </div>
     <button class="btn" onclick="shareLink()" id="shareBtn">🔗 Share</button>
+    <button class="btn" id="keyBtn" onclick="openKeyModal()" title="Set Anthropic API key">🔑 <span id="keyBtnLabel">Set key</span></button>
   </div>
 </header>
+
+<!-- API Key Modal -->
+<div id="keyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center">
+  <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;width:min(380px,92vw);padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <h3 style="font-size:16px;font-weight:600;margin-bottom:8px">🔑 Anthropic API Key</h3>
+    <p style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px">
+      Enter your Anthropic API key to enable live score updates every 3 minutes.<br>
+      Your key is stored <strong>only in this browser</strong> — never sent anywhere except Anthropic's API.
+    </p>
+    <input type="password" id="keyInput" placeholder="sk-ant-…" autocomplete="off" spellcheck="false"
+      style="width:100%;padding:8px 11px;border:1px solid var(--border2);border-radius:7px;font-size:13px;font-family:monospace;background:var(--bg2);color:var(--text);margin-bottom:10px">
+    <div style="display:flex;gap:8px">
+      <button onclick="saveKey()" style="flex:1;padding:8px;border-radius:7px;border:none;background:var(--blue-text);color:#fff;font-size:13px;font-weight:600;cursor:pointer">Save key</button>
+      <button onclick="closeKeyModal()" style="padding:8px 14px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer">Skip</button>
+    </div>
+    <p style="font-size:10px;color:var(--text3);margin-top:10px;line-height:1.5">
+      Get a free key at <strong>console.anthropic.com</strong> → API Keys
+    </p>
+  </div>
+</div>
 
 <div id="statusBar"></div>
 
@@ -187,7 +208,7 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 1
 /* ═══════════════════════════════════════════
    CONFIGURATION — API key injected at build time by GitHub Actions
 ═══════════════════════════════════════════ */
-const BAKED_API_KEY = "__ANTHROPIC_API_KEY__";
+const BAKED_API_KEY = "";
 
 /* ═══════════════════════════════════════════
    TEAM & MATCH DATA  —  48 teams, 12 groups
@@ -458,10 +479,11 @@ async function fetchLiveScores(){
     btn.disabled=false;btn.textContent="⟳ Update scores";return;
   }
 
-  const apiKey=BAKED_API_KEY;
-  if(!apiKey||apiKey==="__ANTHROPIC_API_KEY__"){
-    showStatus("err","⚠ API key not configured. Check GitHub Actions secret.");
-    btn.disabled=false;btn.textContent="⟳ Update scores";return;
+  const apiKey = getKey();
+  if(!apiKey){
+    btn.disabled=false;btn.textContent="⟳ Update scores";
+    openKeyModal();
+    return;
   }
 
   const system=
@@ -694,6 +716,28 @@ function clearDown(round,mi){
   if(state.bracket[key]){delete state.bracket[key];clearDown(round+1,Math.floor(mi/2));}
 }
 
+/* ─── API KEY MANAGEMENT ─── */
+const KEY_STORE = "wc2026_apikey";
+function getKey(){ return localStorage.getItem(KEY_STORE)||""; }
+function saveKey(){
+  const v = document.getElementById("keyInput").value.trim();
+  if(!v){ alert("Please enter a key"); return; }
+  localStorage.setItem(KEY_STORE, v);
+  updateKeyBtn();
+  closeKeyModal();
+  fetchLiveScores();
+}
+function openKeyModal(){
+  const ex = getKey();
+  if(ex) document.getElementById("keyInput").value = ex;
+  document.getElementById("keyModal").style.display = "flex";
+}
+function closeKeyModal(){ document.getElementById("keyModal").style.display = "none"; }
+function updateKeyBtn(){
+  const el = document.getElementById("keyBtnLabel");
+  if(el) el.textContent = getKey() ? "key ✓" : "Set key";
+}
+
 /* ─── AUTO-REFRESH every 3 minutes ─── */
 const REFRESH_MS=3*60*1000;
 let nextAt=0,cdTimer=null,rfTimer=null;
@@ -716,9 +760,14 @@ initTZSelector();
 buildGroupsUI();
 renderBracket();
 document.getElementById('saveIndicator').textContent="All changes saved";
+updateKeyBtn();
 
 (async()=>{
-  await fetchLiveScores();
+  if(!getKey()){
+    openKeyModal();
+  } else {
+    await fetchLiveScores();
+  }
   startRefreshCycle();
 })();
 </script>
