@@ -645,20 +645,66 @@ function buildGroupsUI(){
 
 /* ─── BRACKET ─── */
 function getQualifiers(g){const s=computeStandings(g);return{first:s[0].name,second:s[1].name};}
+/* ─── OFFICIAL FIFA R32 BRACKET (fixed, no redraw)
+   Match 73: A2 vs B2       Match 74: E1 vs 3rd(A/B/C/D/F)
+   Match 75: F1 vs C2       Match 76: C1 vs F2
+   Match 77: I1 vs 3rd(C/D/F/G/H)  Match 78: E2 vs I2
+   Match 79: A1 vs 3rd(C/E/F/H/I)  Match 80: L1 vs 3rd(E/H/I/J/K)
+   Match 81: D1 vs 3rd(B/E/F/I/J)  Match 82: G1 vs 3rd(A/E/H/I/J)
+   Match 83: K2 vs L2       Match 84: H1 vs J2
+   Match 85: B1 vs 3rd(E/F/G/I/J)  Match 86: J1 vs H2
+   Match 87: K1 vs 3rd(D/E/I/J/L)  Match 88: D2 vs G2
+   Third-place slots filled with "TBD 3rd" until group stage ends.
+─────────────────────────────────────────────────────────────── */
 function getR32Seeds(){
-  const order=[
-    ["A1","B2"],["C1","D2"],["E1","F2"],["G1","H2"],
-    ["I1","J2"],["K1","L2"],["A2","B1"],["C2","D1"],
-    ["E2","F1"],["G2","H1"],["I2","J1"],["K2","L1"],
-    ["A1","C2"],["B1","D2"],["E1","G2"],["F1","H2"],
-  ];
+  // The 16 R32 matchups in order (winner-bracket order for proper bracket display)
+  // Each entry: [slot1, slot2] where slots are like "A1","B2","3rd" (TBD)
+  const TBD3 = {name:null,flag:"",label:"Best 3rd (TBD)",group:null};
+
   function resolve(seed){
     const g=seed.slice(0,-1),pos=seed.slice(-1);
     const q=getQualifiers(g);const name=pos==="1"?q.first:q.second;
     if(!name) return{name:null,flag:"",label:seed+" (TBD)",group:g};
     const t=getTeam(name);return{name,flag:t?t.flag:"",label:name,group:g};
   }
-  return order.map(([a,b])=>({t1:resolve(a),t2:resolve(b)}));
+
+  // Official FIFA bracket matchups (Matches 73-88)
+  const matchups = [
+    // Match 73: A2 vs B2
+    [resolve("A2"), resolve("B2")],
+    // Match 74: E1 vs best 3rd from A/B/C/D/F
+    [resolve("E1"), TBD3],
+    // Match 75: F1 vs C2
+    [resolve("F1"), resolve("C2")],
+    // Match 76: C1 vs F2
+    [resolve("C1"), resolve("F2")],
+    // Match 77: I1 vs best 3rd from C/D/F/G/H
+    [resolve("I1"), TBD3],
+    // Match 78: E2 vs I2
+    [resolve("E2"), resolve("I2")],
+    // Match 79: A1 vs best 3rd from C/E/F/H/I
+    [resolve("A1"), TBD3],
+    // Match 80: L1 vs best 3rd from E/H/I/J/K
+    [resolve("L1"), TBD3],
+    // Match 81: D1 vs best 3rd from B/E/F/I/J
+    [resolve("D1"), TBD3],
+    // Match 82: G1 vs best 3rd from A/E/H/I/J
+    [resolve("G1"), TBD3],
+    // Match 83: K2 vs L2
+    [resolve("K2"), resolve("L2")],
+    // Match 84: H1 vs J2
+    [resolve("H1"), resolve("J2")],
+    // Match 85: B1 vs best 3rd from E/F/G/I/J
+    [resolve("B1"), TBD3],
+    // Match 86: J1 vs H2
+    [resolve("J1"), resolve("H2")],
+    // Match 87: K1 vs best 3rd from D/E/I/J/L
+    [resolve("K1"), TBD3],
+    // Match 88: D2 vs G2
+    [resolve("D2"), resolve("G2")],
+  ];
+
+  return matchups.map(([t1,t2])=>({t1,t2}));
 }
 function renderBracket(){
   const el=document.getElementById("bracketEl");el.innerHTML="";
