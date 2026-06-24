@@ -183,7 +183,7 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 1
 
 <div class="view active" id="view-groups">
   <div class="top-bar">
-    <div style="font-size:12px;color:var(--text2)">Scores refresh hourly automatically. Hit <strong>Update scores</strong> to pull latest now (requires API key).</div>
+    <div style="font-size:12px;color:var(--text2)">Hit <strong>Update scores</strong> to pull latest scores (requires API key).</div>
   </div>
   <div class="groups-grid" id="groupsGrid"></div>
 </div>
@@ -518,6 +518,8 @@ async function fetchLiveScores(){
     let updated=0;
     results.forEach(r=>{
       if(r&&r.key&&r.home!==null&&r.away!==null&&Number.isInteger(r.home)&&Number.isInteger(r.away)&&r.home>=0&&r.away>=0){
+        // Never overwrite a hardcoded REAL_SCORE — AI hallucinations corrupt known results
+        if(REAL_SCORES[r.key]) return;
         const ex=state.scores[r.key];
         if(!ex||ex.autoFilled){state.scores[r.key]={a:String(r.home),b:String(r.away),autoFilled:true};updated++;}
       }
@@ -854,7 +856,7 @@ function updateKeyBtn(){
   if(el) el.textContent = getKey() ? "key ✓" : "Set key";
 }
 
-/* auto-refresh removed — page redeploys hourly via GitHub Actions */
+
 
 /* ─── INIT ─── */
 loadState();
@@ -864,7 +866,7 @@ renderBracket();
 document.getElementById('saveIndicator').textContent="All changes saved";
 updateKeyBtn();
 
-// No auto-refresh — update manually via button or wait for hourly deploy
+
 </script>
 </body>
 </html>
