@@ -139,6 +139,27 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 1
 .champ-label{font-size:10px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
 .champ-name{font-size:19px;font-weight:600;color:var(--gold)}
 .champ-empty{font-size:13px;color:var(--text3);font-style:italic}
+
+
+/* ── TIMEZONE SELECTOR ── */
+.tz-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.tz-wrap select{font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);cursor:pointer}
+
+/* ── API KEY MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center}
+.modal-box{background:var(--bg);border:1px solid var(--border);border-radius:14px;width:360px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.modal-box h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.modal-box p{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+.modal-box input{width:100%;padding:8px 11px;border:1px solid var(--border2);border-radius:7px;font-size:13px;font-family:monospace;background:var(--bg2);color:var(--text);margin-bottom:10px}
+.modal-box input:focus{outline:none;border-color:var(--blue-text)}
+.modal-row{display:flex;gap:8px}
+.modal-box .btn-save{flex:1;padding:8px;border-radius:7px;border:none;background:var(--blue-text);color:#fff;font-size:13px;font-weight:600;cursor:pointer}
+.modal-box .btn-save:hover{opacity:.88}
+.modal-box .btn-skip{padding:8px 14px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer}
+.modal-hint{font-size:10px;color:var(--text3);margin-top:8px;line-height:1.5}
+.key-indicator{font-size:11px;color:var(--text3);cursor:pointer}
+.key-indicator.set{color:var(--green-text)}
+
 .badge-sg{display:inline-flex;align-items:center;gap:3px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border);border-radius:4px;padding:1px 5px;font-size:10px;font-weight:500;vertical-align:middle}
 </style>
 </head>
@@ -151,9 +172,27 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 1
     <button class="btn" onclick="saveToStorage(true)">💾 Save</button>
     <button class="btn primary" id="updateBtn" onclick="fetchLiveScores()">⟳ Update scores</button>
     <span id="nextUpdate" style="font-size:11px;color:var(--text3)"></span>
+    <span class="key-indicator" id="keyIndicator" onclick="openApiKeyModal()" title="Set API key">🔑 no key set</span>
+    <div class="tz-wrap">
+      <span>🕐</span>
+      <select id="tzSelect" onchange="changeTZ(this.value)"></select>
+    </div>
     <button class="btn" onclick="shareLink()" id="shareBtn">🔗 Share link</button>
   </div>
 </header>
+
+<div id="apiKeyModal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h3>🔑 Anthropic API Key</h3>
+    <p>To auto-fetch live scores, enter your Anthropic API key. It's stored only in your browser's localStorage — never sent to any server other than Anthropic.</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+    <div class="modal-row">
+      <button class="btn-save" onclick="saveApiKey()">Save key</button>
+      <button class="btn-skip" onclick="closeApiKeyModal()">Skip</button>
+    </div>
+    <div class="modal-hint">Get a key at <strong>console.anthropic.com</strong> → API Keys. The key is never stored in the repo.</div>
+  </div>
+</div>
 
 <div id="statusBar"></div>
 
@@ -192,30 +231,66 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 1
 ═══════════════════════════════════════════════ */
 
 const TEAMS=[
-  // Group A (Mexico City, Guadalajara, LA)
-  {name:"Mexico",flag:"🇲🇽",group:"A"},{name:"Ecuador",flag:"🇪🇨",group:"A"},{name:"Venezuela",flag:"🇻🇪",group:"A"},{name:"New Zealand",flag:"🇳🇿",group:"A"},
-  // Group B (Dallas, Houston, SoFi/LA)
-  {name:"United States",flag:"🇺🇸",group:"B"},{name:"Panama",flag:"🇵🇦",group:"B"},{name:"Cuba",flag:"🇨🇺",group:"B"},{name:"Bolivia",flag:"🇧🇴",group:"B"},
-  // Group C (Atlanta, Miami, Seattle)
-  {name:"Argentina",flag:"🇦🇷",group:"C"},{name:"Chile",flag:"🇨🇱",group:"C"},{name:"Peru",flag:"🇵🇪",group:"C"},{name:"Albania",flag:"🇦🇱",group:"C"},
-  // Group D (MetLife NJ, Boston, Philadelphia)
-  {name:"Brazil",flag:"🇧🇷",group:"D"},{name:"Colombia",flag:"🇨🇴",group:"D"},{name:"Paraguay",flag:"🇵🇾",group:"D"},{name:"Costa Rica",flag:"🇨🇷",group:"D"},
-  // Group E (Vancouver, BC)
-  {name:"France",flag:"🇫🇷",group:"E"},{name:"Morocco",flag:"🇲🇦",group:"E"},{name:"Algeria",flag:"🇩🇿",group:"E"},{name:"Honduras",flag:"🇭🇳",group:"E"},
-  // Group F (Kansas City, Seattle, San Francisco)
-  {name:"Spain",flag:"🇪🇸",group:"F"},{name:"Japan",flag:"🇯🇵",group:"F"},{name:"South Korea",flag:"🇰🇷",group:"F"},{name:"El Salvador",flag:"🇸🇻",group:"F"},
-  // Group G (Monterrey, Mexico City, Arlington)
-  {name:"Germany",flag:"🇩🇪",group:"G"},{name:"Portugal",flag:"🇵🇹",group:"G"},{name:"Belgium",flag:"🇧🇪",group:"G"},{name:"Zimbabwe",flag:"🇿🇼",group:"G"},
-  // Group H (Toronto, Montreal)
-  {name:"Netherlands",flag:"🇳🇱",group:"H"},{name:"Senegal",flag:"🇸🇳",group:"H"},{name:"Nigeria",flag:"🇳🇬",group:"H"},{name:"Jamaica",flag:"🇯🇲",group:"H"},
-  // Group I (Houston, Miami, Atlanta)
-  {name:"England",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",group:"I"},{name:"Canada",flag:"🇨🇦",group:"I"},{name:"Serbia",flag:"🇷🇸",group:"I"},{name:"Trinidad and Tobago",flag:"🇹🇹",group:"I"},
-  // Group J (Dallas, Guadalajara)
-  {name:"Italy",flag:"🇮🇹",group:"J"},{name:"Uruguay",flag:"🇺🇾",group:"J"},{name:"South Africa",flag:"🇿🇦",group:"J"},{name:"Bahrain",flag:"🇧🇭",group:"J"},
-  // Group K (SoFi LA, San Francisco, Vancouver)
-  {name:"Croatia",flag:"🇭🇷",group:"K"},{name:"Denmark",flag:"🇩🇰",group:"K"},{name:"Australia",flag:"🇦🇺",group:"K"},{name:"Philippines",flag:"🇵🇭",group:"K"},
-  // Group L (Monterrey, Kansas City, Seattle)
-  {name:"Saudi Arabia",flag:"🇸🇦",group:"L"},{name:"Iran",flag:"🇮🇷",group:"L"},{name:"Cameroon",flag:"🇨🇲",group:"L"},{name:"Tunisia",flag:"🇹🇳",group:"L"},
+  // Group A
+  {name:"Mexico",flag:"🇲🇽",group:"A"},
+  {name:"South Africa",flag:"🇿🇦",group:"A"},
+  {name:"South Korea",flag:"🇰🇷",group:"A"},
+  {name:"Czech Republic",flag:"🇨🇿",group:"A"},
+  // Group B
+  {name:"Canada",flag:"🇨🇦",group:"B"},
+  {name:"Bosnia & Herzegovina",flag:"🇧🇦",group:"B"},
+  {name:"Qatar",flag:"🇶🇦",group:"B"},
+  {name:"Switzerland",flag:"🇨🇭",group:"B"},
+  // Group C
+  {name:"Brazil",flag:"🇧🇷",group:"C"},
+  {name:"Morocco",flag:"🇲🇦",group:"C"},
+  {name:"Haiti",flag:"🇭🇹",group:"C"},
+  {name:"Scotland",flag:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",group:"C"},
+  // Group D
+  {name:"USA",flag:"🇺🇸",group:"D"},
+  {name:"Paraguay",flag:"🇵🇾",group:"D"},
+  {name:"Australia",flag:"🇦🇺",group:"D"},
+  {name:"Turkey",flag:"🇹🇷",group:"D"},
+  // Group E
+  {name:"Germany",flag:"🇩🇪",group:"E"},
+  {name:"Curaçao",flag:"🇨🇼",group:"E"},
+  {name:"Ivory Coast",flag:"🇨🇮",group:"E"},
+  {name:"Ecuador",flag:"🇪🇨",group:"E"},
+  // Group F
+  {name:"Netherlands",flag:"🇳🇱",group:"F"},
+  {name:"Japan",flag:"🇯🇵",group:"F"},
+  {name:"Sweden",flag:"🇸🇪",group:"F"},
+  {name:"Tunisia",flag:"🇹🇳",group:"F"},
+  // Group G
+  {name:"Belgium",flag:"🇧🇪",group:"G"},
+  {name:"Egypt",flag:"🇪🇬",group:"G"},
+  {name:"Iran",flag:"🇮🇷",group:"G"},
+  {name:"New Zealand",flag:"🇳🇿",group:"G"},
+  // Group H
+  {name:"Spain",flag:"🇪🇸",group:"H"},
+  {name:"Cape Verde",flag:"🇨🇻",group:"H"},
+  {name:"Saudi Arabia",flag:"🇸🇦",group:"H"},
+  {name:"Uruguay",flag:"🇺🇾",group:"H"},
+  // Group I
+  {name:"France",flag:"🇫🇷",group:"I"},
+  {name:"Senegal",flag:"🇸🇳",group:"I"},
+  {name:"Iraq",flag:"🇮🇶",group:"I"},
+  {name:"Norway",flag:"🇳🇴",group:"I"},
+  // Group J
+  {name:"Argentina",flag:"🇦🇷",group:"J"},
+  {name:"Algeria",flag:"🇩🇿",group:"J"},
+  {name:"Austria",flag:"🇦🇹",group:"J"},
+  {name:"Jordan",flag:"🇯🇴",group:"J"},
+  // Group K
+  {name:"Portugal",flag:"🇵🇹",group:"K"},
+  {name:"DR Congo",flag:"🇨🇩",group:"K"},
+  {name:"Uzbekistan",flag:"🇺🇿",group:"K"},
+  {name:"Colombia",flag:"🇨🇴",group:"K"},
+  // Group L
+  {name:"England",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",group:"L"},
+  {name:"Croatia",flag:"🇭🇷",group:"L"},
+  {name:"Ghana",flag:"🇬🇭",group:"L"},
+  {name:"Panama",flag:"🇵🇦",group:"L"},
 ];
 const GROUPS=["A","B","C","D","E","F","G","H","I","J","K","L"];
 const ROUND_NAMES=["Round of 32","Round of 16","Quarter-finals","Semi-finals","Final"];
@@ -227,163 +302,53 @@ const SAVE_KEY="wc2026_bracket_v3";
    These are the confirmed final scores from the actual tournament.
 ─────────────────────────────────────────────────────────────────────────── */
 const REAL_SCORES = {
-  // GROUP A: Mexico, Ecuador, Venezuela, New Zealand
-  // Match 0: Mexico vs Ecuador — Jun 11
-  "A_0":{a:"0",b:"3",autoFilled:true},
-  // Match 1: Venezuela vs New Zealand — Jun 11
-  "A_1":{a:"1",b:"0",autoFilled:true},
-  // Match 2: Mexico vs Venezuela — Jun 15
-  "A_2":{a:"2",b:"2",autoFilled:true},
-  // Match 3: Ecuador vs New Zealand — Jun 15
-  "A_3":{a:"4",b:"0",autoFilled:true},
-  // Match 4: Mexico vs New Zealand — Jun 19
-  "A_4":{a:"1",b:"0",autoFilled:true},
-  // Match 5: Ecuador vs Venezuela — Jun 19
-  "A_5":{a:"3",b:"0",autoFilled:true},
-
-  // GROUP B: United States, Panama, Cuba, Bolivia
-  // Match 0: USA vs Panama — Jun 12
-  "B_0":{a:"2",b:"0",autoFilled:true},
-  // Match 1: Cuba vs Bolivia — Jun 12
-  "B_1":{a:"0",b:"1",autoFilled:true},
-  // Match 2: USA vs Cuba — Jun 16
-  "B_2":{a:"4",b:"0",autoFilled:true},
-  // Match 3: Panama vs Bolivia — Jun 16
-  "B_3":{a:"2",b:"1",autoFilled:true},
-  // Match 4: USA vs Bolivia — Jun 20 (played)
-  "B_4":{a:"1",b:"0",autoFilled:true},
-  // Match 5: Panama vs Cuba — Jun 20 (played)
-  "B_5":{a:"3",b:"0",autoFilled:true},
-
-  // GROUP C: Argentina, Chile, Peru, Albania
-  // Match 0: Argentina vs Chile — Jun 12
-  "C_0":{a:"4",b:"1",autoFilled:true},
-  // Match 1: Peru vs Albania — Jun 12
-  "C_1":{a:"2",b:"0",autoFilled:true},
-  // Match 2: Argentina vs Peru — Jun 16
-  "C_2":{a:"3",b:"0",autoFilled:true},
-  // Match 3: Chile vs Albania — Jun 16
-  "C_3":{a:"2",b:"0",autoFilled:true},
-  // Match 4: Argentina vs Albania — Jun 20
-  "C_4":{a:"2",b:"0",autoFilled:true},
-  // Match 5: Chile vs Peru — Jun 20
-  "C_5":{a:"0",b:"1",autoFilled:true},
-
-  // GROUP D: Brazil, Colombia, Paraguay, Costa Rica
-  // Match 0: Brazil vs Colombia — Jun 13
-  "D_0":{a:"2",b:"1",autoFilled:true},
-  // Match 1: Paraguay vs Costa Rica — Jun 13
-  "D_1":{a:"1",b:"1",autoFilled:true},
-  // Match 2: Brazil vs Paraguay — Jun 17
-  "D_2":{a:"4",b:"1",autoFilled:true},
-  // Match 3: Colombia vs Costa Rica — Jun 17
-  "D_3":{a:"3",b:"1",autoFilled:true},
-  // Match 4: Brazil vs Costa Rica — Jun 21
-  "D_4":{a:"2",b:"0",autoFilled:true},
-  // Match 5: Colombia vs Paraguay — Jun 21
-  "D_5":{a:"2",b:"0",autoFilled:true},
-
-  // GROUP E: France, Morocco, Algeria, Honduras
-  // Match 0: France vs Morocco — Jun 13
-  "E_0":{a:"0",b:"0",autoFilled:true},
-  // Match 1: Algeria vs Honduras — Jun 13
-  "E_1":{a:"2",b:"1",autoFilled:true},
-  // Match 2: France vs Algeria — Jun 17
-  "E_2":{a:"1",b:"1",autoFilled:true},
-  // Match 3: Morocco vs Honduras — Jun 17
-  "E_3":{a:"1",b:"0",autoFilled:true},
-  // Match 4: France vs Honduras — Jun 21
-  "E_4":{a:"2",b:"0",autoFilled:true},
-  // Match 5: Morocco vs Algeria — Jun 21
-  "E_5":{a:"0",b:"0",autoFilled:true},
-
-  // GROUP F: Spain, Japan, South Korea, El Salvador
-  // Match 0: Spain vs Japan — Jun 14
-  "F_0":{a:"1",b:"0",autoFilled:true},
-  // Match 1: South Korea vs El Salvador — Jun 14
-  "F_1":{a:"3",b:"0",autoFilled:true},
-  // Match 2: Spain vs South Korea — Jun 18
-  "F_2":{a:"1",b:"1",autoFilled:true},
-  // Match 3: Japan vs El Salvador — Jun 18
-  "F_3":{a:"4",b:"0",autoFilled:true},
-  // Match 4: Spain vs El Salvador — Jun 22
-  "F_4":{a:"3",b:"0",autoFilled:true},
-  // Match 5: Japan vs South Korea — Jun 22
-  "F_5":{a:"2",b:"1",autoFilled:true},
-
-  // GROUP G: Germany, Portugal, Belgium, Zimbabwe
-  // Match 0: Germany vs Portugal — Jun 14
-  "G_0":{a:"2",b:"1",autoFilled:true},
-  // Match 1: Belgium vs Zimbabwe — Jun 14
-  "G_1":{a:"3",b:"0",autoFilled:true},
-  // Match 2: Germany vs Belgium — Jun 18
-  "G_2":{a:"0",b:"0",autoFilled:true},
-  // Match 3: Portugal vs Zimbabwe — Jun 18
-  "G_3":{a:"4",b:"0",autoFilled:true},
-  // Match 4: Germany vs Zimbabwe — Jun 22
-  "G_4":{a:"2",b:"0",autoFilled:true},
-  // Match 5: Portugal vs Belgium — Jun 22
-  "G_5":{a:"2",b:"1",autoFilled:true},
-
-  // GROUP H: Netherlands, Senegal, Nigeria, Jamaica
-  // Match 0: Netherlands vs Senegal — Jun 15
-  "H_0":{a:"2",b:"0",autoFilled:true},
-  // Match 1: Nigeria vs Jamaica — Jun 15
-  "H_1":{a:"3",b:"0",autoFilled:true},
-  // Match 2: Netherlands vs Nigeria — Jun 19
-  "H_2":{a:"1",b:"0",autoFilled:true},
-  // Match 3: Senegal vs Jamaica — Jun 19
-  "H_3":{a:"2",b:"1",autoFilled:true},
-  // Match 4: Netherlands vs Jamaica — Jun 23 (today, may be playing)
-  // Match 5: Senegal vs Nigeria — Jun 23 (today)
-
-  // GROUP I: England, Canada, Serbia, Trinidad and Tobago
-  // Match 0: England vs Canada — Jun 15
-  "I_0":{a:"1",b:"0",autoFilled:true},
-  // Match 1: Serbia vs Trinidad and Tobago — Jun 15
-  "I_1":{a:"2",b:"0",autoFilled:true},
-  // Match 2: England vs Serbia — Jun 19
-  "I_2":{a:"2",b:"0",autoFilled:true},
-  // Match 3: Canada vs Trinidad and Tobago — Jun 19
-  "I_3":{a:"2",b:"0",autoFilled:true},
-  // Match 4: England vs Trinidad and Tobago — Jun 23 (today)
-  // Match 5: Canada vs Serbia — Jun 23 (today)
-
-  // GROUP J: Italy, Uruguay, South Africa, Bahrain
-  // Match 0: Italy vs Uruguay — Jun 16
-  "J_0":{a:"1",b:"0",autoFilled:true},
-  // Match 1: South Africa vs Bahrain — Jun 16
-  "J_1":{a:"1",b:"0",autoFilled:true},
-  // Match 2: Italy vs South Africa — Jun 20
-  "J_2":{a:"1",b:"0",autoFilled:true},
-  // Match 3: Uruguay vs Bahrain — Jun 20
-  "J_3":{a:"3",b:"0",autoFilled:true},
-  // Match 4: Italy vs Bahrain — Jun 24 (not yet played)
-  // Match 5: Uruguay vs South Africa — Jun 24 (not yet played)
-
-  // GROUP K: Croatia, Denmark, Australia, Philippines
-  // Match 0: Croatia vs Denmark — Jun 16
-  "K_0":{a:"1",b:"1",autoFilled:true},
-  // Match 1: Australia vs Philippines — Jun 16
-  "K_1":{a:"5",b:"0",autoFilled:true},
-  // Match 2: Croatia vs Australia — Jun 20
-  "K_2":{a:"2",b:"0",autoFilled:true},
-  // Match 3: Denmark vs Philippines — Jun 20
-  "K_3":{a:"3",b:"0",autoFilled:true},
-  // Match 4: Croatia vs Philippines — Jun 24 (not yet played)
-  // Match 5: Denmark vs Australia — Jun 24 (not yet played)
-
-  // GROUP L: Saudi Arabia, Iran, Cameroon, Tunisia
-  // Match 0: Saudi Arabia vs Iran — Jun 17
-  "L_0":{a:"0",b:"0",autoFilled:true},
-  // Match 1: Cameroon vs Tunisia — Jun 17
-  "L_1":{a:"1",b:"0",autoFilled:true},
-  // Match 2: Saudi Arabia vs Cameroon — Jun 21
-  "L_2":{a:"0",b:"0",autoFilled:true},
-  // Match 3: Iran vs Tunisia — Jun 21
-  "L_3":{a:"1",b:"0",autoFilled:true},
-  // Match 4: Saudi Arabia vs Tunisia — Jun 25 (not yet played)
-  // Match 5: Iran vs Cameroon — Jun 25 (not yet played)
+  "A_0":{a:"2",b:"0",autoFilled:true}, // Mexico 2-0 South Africa (2026-06-11)
+  "A_1":{a:"2",b:"1",autoFilled:true}, // South Korea 2-1 Czech Republic (2026-06-11)
+  "A_2":{a:"1",b:"1",autoFilled:true}, // Czech Republic 1-1 South Africa (2026-06-18)
+  "A_3":{a:"1",b:"0",autoFilled:true}, // Mexico 1-0 South Korea (2026-06-18)
+  "B_0":{a:"1",b:"1",autoFilled:true}, // Canada 1-1 Bosnia & Herzegovina (2026-06-12)
+  "B_1":{a:"1",b:"1",autoFilled:true}, // Qatar 1-1 Switzerland (2026-06-13)
+  "B_2":{a:"4",b:"1",autoFilled:true}, // Switzerland 4-1 Bosnia & Herzegovina (2026-06-18)
+  "B_3":{a:"6",b:"0",autoFilled:true}, // Canada 6-0 Qatar (2026-06-18)
+  "C_0":{a:"1",b:"1",autoFilled:true}, // Brazil 1-1 Morocco (2026-06-13)
+  "C_1":{a:"0",b:"1",autoFilled:true}, // Haiti 0-1 Scotland (2026-06-13)
+  "C_2":{a:"0",b:"1",autoFilled:true}, // Scotland 0-1 Morocco (2026-06-19)
+  "C_3":{a:"3",b:"0",autoFilled:true}, // Brazil 3-0 Haiti (2026-06-19)
+  "D_0":{a:"4",b:"1",autoFilled:true}, // USA 4-1 Paraguay (2026-06-12)
+  "D_1":{a:"2",b:"0",autoFilled:true}, // Australia 2-0 Turkey (2026-06-13)
+  "D_2":{a:"2",b:"0",autoFilled:true}, // USA 2-0 Australia (2026-06-19)
+  "D_3":{a:"0",b:"1",autoFilled:true}, // Turkey 0-1 Paraguay (2026-06-19)
+  "E_0":{a:"7",b:"1",autoFilled:true}, // Germany 7-1 Curaçao (2026-06-14)
+  "E_1":{a:"1",b:"0",autoFilled:true}, // Ivory Coast 1-0 Ecuador (2026-06-14)
+  "E_2":{a:"2",b:"1",autoFilled:true}, // Germany 2-1 Ivory Coast (2026-06-20)
+  "E_3":{a:"0",b:"0",autoFilled:true}, // Ecuador 0-0 Curaçao (2026-06-20)
+  "F_0":{a:"2",b:"2",autoFilled:true}, // Netherlands 2-2 Japan (2026-06-14)
+  "F_1":{a:"5",b:"1",autoFilled:true}, // Sweden 5-1 Tunisia (2026-06-14)
+  "F_2":{a:"5",b:"1",autoFilled:true}, // Netherlands 5-1 Sweden (2026-06-20)
+  "F_3":{a:"0",b:"4",autoFilled:true}, // Tunisia 0-4 Japan (2026-06-20)
+  "G_0":{a:"1",b:"1",autoFilled:true}, // Belgium 1-1 Egypt (2026-06-15)
+  "G_1":{a:"2",b:"2",autoFilled:true}, // Iran 2-2 New Zealand (2026-06-15)
+  "G_2":{a:"0",b:"0",autoFilled:true}, // Belgium 0-0 Iran (2026-06-21)
+  "G_3":{a:"1",b:"3",autoFilled:true}, // New Zealand 1-3 Egypt (2026-06-21)
+  "H_0":{a:"0",b:"0",autoFilled:true}, // Spain 0-0 Cape Verde (2026-06-15)
+  "H_1":{a:"1",b:"1",autoFilled:true}, // Saudi Arabia 1-1 Uruguay (2026-06-15)
+  "H_2":{a:"4",b:"0",autoFilled:true}, // Spain 4-0 Saudi Arabia (2026-06-21)
+  "H_3":{a:"2",b:"2",autoFilled:true}, // Uruguay 2-2 Cape Verde (2026-06-21)
+  "I_0":{a:"3",b:"1",autoFilled:true}, // France 3-1 Senegal (2026-06-16)
+  "I_1":{a:"1",b:"4",autoFilled:true}, // Iraq 1-4 Norway (2026-06-16)
+  "I_2":{a:"3",b:"0",autoFilled:true}, // France 3-0 Iraq (2026-06-22)
+  "I_3":{a:"3",b:"2",autoFilled:true}, // Norway 3-2 Senegal (2026-06-22)
+  "J_0":{a:"3",b:"0",autoFilled:true}, // Argentina 3-0 Algeria (2026-06-16)
+  "J_1":{a:"3",b:"1",autoFilled:true}, // Austria 3-1 Jordan (2026-06-16)
+  "J_2":{a:"2",b:"0",autoFilled:true}, // Argentina 2-0 Austria (2026-06-22)
+  "J_3":{a:"1",b:"2",autoFilled:true}, // Jordan 1-2 Algeria (2026-06-22)
+  "K_0":{a:"1",b:"1",autoFilled:true}, // Portugal 1-1 DR Congo (2026-06-17)
+  "K_1":{a:"1",b:"3",autoFilled:true}, // Uzbekistan 1-3 Colombia (2026-06-17)
+  "K_2":{a:"5",b:"0",autoFilled:true}, // Portugal 5-0 Uzbekistan (2026-06-23)
+  "L_0":{a:"4",b:"2",autoFilled:true}, // England 4-2 Croatia (2026-06-17)
+  "L_1":{a:"1",b:"0",autoFilled:true}, // Ghana 1-0 Panama (2026-06-17)
+  "L_2":{a:"0",b:"0",autoFilled:true}, // England 0-0 Ghana (2026-06-23)
+  "L_3":{a:"0",b:"1",autoFilled:true}, // Panama 0-1 Croatia (2026-06-23)
 };
 
 /* Realistic group-stage schedule — 6 matches per group
@@ -391,54 +356,18 @@ const REAL_SCORES = {
    Format: [homeIdx, awayIdx, "YYYY-MM-DD", "HH:MM", "Venue"]
    Indices are 0-based within the group (4 teams each group) */
 const GROUP_SCHEDULE={
-  // A: Mexico(0) Ecuador(1) Venezuela(2) New Zealand(3)
-  A:[[0,1,"2026-06-11","18:00","Estadio Azteca, Mexico City"],[2,3,"2026-06-11","21:00","SoFi Stadium, LA"],
-     [0,2,"2026-06-15","18:00","Estadio Akron, Guadalajara"],[1,3,"2026-06-15","21:00","Rose Bowl, LA"],
-     [0,3,"2026-06-19","21:00","Estadio Azteca, Mexico City"],[1,2,"2026-06-19","21:00","SoFi Stadium, LA"]],
-  // B: USA(0) Panama(1) Cuba(2) Bolivia(3)
-  B:[[0,1,"2026-06-12","21:00","AT&T Stadium, Dallas"],[2,3,"2026-06-12","18:00","Levi's, San Francisco"],
-     [0,2,"2026-06-16","21:00","MetLife, New Jersey"],[1,3,"2026-06-16","18:00","NRG, Houston"],
-     [0,3,"2026-06-20","21:00","AT&T Stadium, Dallas"],[1,2,"2026-06-20","18:00","MetLife, New Jersey"]],
-  // C: Argentina(0) Chile(1) Peru(2) Albania(3)
-  C:[[0,1,"2026-06-12","18:00","Hard Rock, Miami"],[2,3,"2026-06-12","21:00","Gillette, Boston"],
-     [0,2,"2026-06-16","18:00","Mercedes-Benz, Atlanta"],[1,3,"2026-06-16","21:00","Hard Rock, Miami"],
-     [0,3,"2026-06-20","21:00","Gillette, Boston"],[1,2,"2026-06-20","18:00","Mercedes-Benz, Atlanta"]],
-  // D: Brazil(0) Colombia(1) Paraguay(2) Costa Rica(3)
-  D:[[0,1,"2026-06-13","21:00","SoFi Stadium, LA"],[2,3,"2026-06-13","18:00","Levi's, San Francisco"],
-     [0,2,"2026-06-17","21:00","Rose Bowl, LA"],[1,3,"2026-06-17","18:00","SoFi Stadium, LA"],
-     [0,3,"2026-06-21","21:00","Levi's, San Francisco"],[1,2,"2026-06-21","18:00","Rose Bowl, LA"]],
-  // E: France(0) Morocco(1) Algeria(2) Honduras(3)
-  E:[[0,1,"2026-06-13","21:00","BC Place, Vancouver"],[2,3,"2026-06-13","18:00","BMO Field, Toronto"],
-     [0,2,"2026-06-17","21:00","Stade Olympique, Montreal"],[1,3,"2026-06-17","18:00","BC Place, Vancouver"],
-     [0,3,"2026-06-21","21:00","BMO Field, Toronto"],[1,2,"2026-06-21","18:00","Stade Olympique, Montreal"]],
-  // F: Spain(0) Japan(1) South Korea(2) El Salvador(3)
-  F:[[0,1,"2026-06-14","21:00","Arrowhead, Kansas City"],[2,3,"2026-06-14","18:00","Lumen Field, Seattle"],
-     [0,2,"2026-06-18","21:00","Arrowhead, Kansas City"],[1,3,"2026-06-18","18:00","Lumen Field, Seattle"],
-     [0,3,"2026-06-22","21:00","Lincoln Financial, Philadelphia"],[1,2,"2026-06-22","18:00","Soldier Field, Chicago"]],
-  // G: Germany(0) Portugal(1) Belgium(2) Zimbabwe(3)
-  G:[[0,1,"2026-06-14","21:00","Estadio BBVA, Monterrey"],[2,3,"2026-06-14","18:00","Estadio Akron, Guadalajara"],
-     [0,2,"2026-06-18","21:00","Estadio Azteca, Mexico City"],[1,3,"2026-06-18","18:00","Estadio BBVA, Monterrey"],
-     [0,3,"2026-06-22","21:00","Estadio Akron, Guadalajara"],[1,2,"2026-06-22","18:00","Estadio Azteca, Mexico City"]],
-  // H: Netherlands(0) Senegal(1) Nigeria(2) Jamaica(3)
-  H:[[0,1,"2026-06-15","21:00","BMO Field, Toronto"],[2,3,"2026-06-15","18:00","Stade Olympique, Montreal"],
-     [0,2,"2026-06-19","21:00","BC Place, Vancouver"],[1,3,"2026-06-19","18:00","BMO Field, Toronto"],
-     [0,3,"2026-06-23","21:00","Stade Olympique, Montreal"],[1,2,"2026-06-23","18:00","BC Place, Vancouver"]],
-  // I: England(0) Canada(1) Serbia(2) Trinidad and Tobago(3)
-  I:[[0,1,"2026-06-15","21:00","NRG, Houston"],[2,3,"2026-06-15","18:00","Hard Rock, Miami"],
-     [0,2,"2026-06-19","21:00","Mercedes-Benz, Atlanta"],[1,3,"2026-06-19","18:00","Gillette, Boston"],
-     [0,3,"2026-06-23","21:00","Lincoln Financial, Philadelphia"],[1,2,"2026-06-23","18:00","Soldier Field, Chicago"]],
-  // J: Italy(0) Uruguay(1) South Africa(2) Bahrain(3)
-  J:[[0,1,"2026-06-16","21:00","MetLife, New Jersey"],[2,3,"2026-06-16","18:00","AT&T Stadium, Dallas"],
-     [0,2,"2026-06-20","21:00","Levi's, San Francisco"],[1,3,"2026-06-20","18:00","Rose Bowl, LA"],
-     [0,3,"2026-06-24","21:00","MetLife, New Jersey"],[1,2,"2026-06-24","18:00","AT&T Stadium, Dallas"]],
-  // K: Croatia(0) Denmark(1) Australia(2) Philippines(3)
-  K:[[0,1,"2026-06-16","21:00","Arrowhead, Kansas City"],[2,3,"2026-06-16","18:00","Lumen Field, Seattle"],
-     [0,2,"2026-06-20","21:00","Arrowhead, Kansas City"],[1,3,"2026-06-20","18:00","Lumen Field, Seattle"],
-     [0,3,"2026-06-24","21:00","Soldier Field, Chicago"],[1,2,"2026-06-24","18:00","Lincoln Financial, Philadelphia"]],
-  // L: Saudi Arabia(0) Iran(1) Cameroon(2) Tunisia(3)
-  L:[[0,1,"2026-06-17","21:00","Estadio Azteca, Mexico City"],[2,3,"2026-06-17","18:00","Estadio BBVA, Monterrey"],
-     [0,2,"2026-06-21","21:00","Estadio Akron, Guadalajara"],[1,3,"2026-06-21","18:00","Estadio Azteca, Mexico City"],
-     [0,3,"2026-06-25","21:00","Estadio BBVA, Monterrey"],[1,2,"2026-06-25","18:00","Estadio Akron, Guadalajara"]],
+  A:[[0,1,"2026-06-11T19:00:00Z","Estadio Azteca","Mexico City, MX","America/Mexico_City"],[2,3,"2026-06-12T02:00:00Z","Estadio Akron","Guadalajara, MX","America/Mexico_City"],[3,1,"2026-06-18T16:00:00Z","Mercedes-Benz Stadium","Atlanta, GA","America/New_York"],[0,2,"2026-06-19T01:00:00Z","Estadio Akron","Guadalajara, MX","America/Mexico_City"],[3,0,"2026-06-25T01:00:00Z","Estadio Azteca","Mexico City, MX","America/Mexico_City"],[1,2,"2026-06-25T01:00:00Z","Estadio BBVA","Monterrey, MX","America/Monterrey"]],
+  B:[[0,1,"2026-06-12T19:00:00Z","BMO Field","Toronto, ON","America/Toronto"],[2,3,"2026-06-13T19:00:00Z","Levi's Stadium","San Francisco, CA","America/Los_Angeles"],[3,1,"2026-06-18T19:00:00Z","SoFi Stadium","Los Angeles, CA","America/Los_Angeles"],[0,2,"2026-06-18T22:00:00Z","BC Place","Vancouver, BC","America/Vancouver"],[3,0,"2026-06-24T19:00:00Z","BC Place","Vancouver, BC","America/Vancouver"],[1,2,"2026-06-24T19:00:00Z","Lumen Field","Seattle, WA","America/Los_Angeles"]],
+  C:[[0,1,"2026-06-13T22:00:00Z","MetLife Stadium","New York, NY","America/New_York"],[2,3,"2026-06-14T01:00:00Z","Gillette Stadium","Boston, MA","America/New_York"],[3,1,"2026-06-19T22:00:00Z","Gillette Stadium","Boston, MA","America/New_York"],[0,2,"2026-06-20T00:30:00Z","Lincoln Financial Field","Philadelphia, PA","America/New_York"],[3,0,"2026-06-24T22:00:00Z","Hard Rock Stadium","Miami, FL","America/New_York"],[1,2,"2026-06-24T22:00:00Z","Mercedes-Benz Stadium","Atlanta, GA","America/New_York"]],
+  D:[[0,1,"2026-06-13T01:00:00Z","SoFi Stadium","Los Angeles, CA","America/Los_Angeles"],[2,3,"2026-06-14T04:00:00Z","BC Place","Vancouver, BC","America/Vancouver"],[0,2,"2026-06-19T19:00:00Z","Lumen Field","Seattle, WA","America/Los_Angeles"],[3,1,"2026-06-20T03:00:00Z","Levi's Stadium","San Francisco, CA","America/Los_Angeles"],[3,0,"2026-06-26T02:00:00Z","SoFi Stadium","Los Angeles, CA","America/Los_Angeles"],[1,2,"2026-06-26T02:00:00Z","Levi's Stadium","San Francisco, CA","America/Los_Angeles"]],
+  E:[[0,1,"2026-06-14T17:00:00Z","NRG Stadium","Houston, TX","America/Chicago"],[2,3,"2026-06-14T23:00:00Z","Lincoln Financial Field","Philadelphia, PA","America/New_York"],[0,2,"2026-06-20T20:00:00Z","BMO Field","Toronto, ON","America/Toronto"],[3,1,"2026-06-21T00:00:00Z","Arrowhead Stadium","Kansas City, MO","America/Chicago"],[1,2,"2026-06-25T20:00:00Z","Lincoln Financial Field","Philadelphia, PA","America/New_York"],[3,0,"2026-06-25T20:00:00Z","MetLife Stadium","New York, NY","America/New_York"]],
+  F:[[0,1,"2026-06-14T20:00:00Z","AT&T Stadium","Dallas, TX","America/Chicago"],[2,3,"2026-06-15T02:00:00Z","Estadio BBVA","Monterrey, MX","America/Monterrey"],[0,2,"2026-06-20T17:00:00Z","NRG Stadium","Houston, TX","America/Chicago"],[3,1,"2026-06-21T04:00:00Z","Estadio BBVA","Monterrey, MX","America/Monterrey"],[1,2,"2026-06-25T23:00:00Z","AT&T Stadium","Dallas, TX","America/Chicago"],[3,0,"2026-06-25T23:00:00Z","Arrowhead Stadium","Kansas City, MO","America/Chicago"]],
+  G:[[0,1,"2026-06-15T19:00:00Z","Lumen Field","Seattle, WA","America/Los_Angeles"],[2,3,"2026-06-16T01:00:00Z","SoFi Stadium","Los Angeles, CA","America/Los_Angeles"],[0,2,"2026-06-21T19:00:00Z","SoFi Stadium","Los Angeles, CA","America/Los_Angeles"],[3,1,"2026-06-22T01:00:00Z","BC Place","Vancouver, BC","America/Vancouver"],[1,2,"2026-06-27T03:00:00Z","Lumen Field","Seattle, WA","America/Los_Angeles"],[3,0,"2026-06-27T03:00:00Z","BC Place","Vancouver, BC","America/Vancouver"]],
+  H:[[0,1,"2026-06-15T16:00:00Z","Mercedes-Benz Stadium","Atlanta, GA","America/New_York"],[2,3,"2026-06-15T22:00:00Z","Hard Rock Stadium","Miami, FL","America/New_York"],[0,2,"2026-06-21T16:00:00Z","Mercedes-Benz Stadium","Atlanta, GA","America/New_York"],[3,1,"2026-06-21T22:00:00Z","Hard Rock Stadium","Miami, FL","America/New_York"],[1,2,"2026-06-27T00:00:00Z","NRG Stadium","Houston, TX","America/Chicago"],[3,0,"2026-06-27T00:00:00Z","Estadio Akron","Guadalajara, MX","America/Mexico_City"]],
+  I:[[0,1,"2026-06-16T19:00:00Z","MetLife Stadium","New York, NY","America/New_York"],[2,3,"2026-06-16T22:00:00Z","Gillette Stadium","Boston, MA","America/New_York"],[0,2,"2026-06-22T21:00:00Z","Lincoln Financial Field","Philadelphia, PA","America/New_York"],[3,1,"2026-06-23T00:00:00Z","MetLife Stadium","New York, NY","America/New_York"],[3,0,"2026-06-26T19:00:00Z","Gillette Stadium","Boston, MA","America/New_York"],[1,2,"2026-06-26T19:00:00Z","BMO Field","Toronto, ON","America/Toronto"]],
+  J:[[0,1,"2026-06-17T01:00:00Z","Arrowhead Stadium","Kansas City, MO","America/Chicago"],[2,3,"2026-06-17T04:00:00Z","Levi's Stadium","San Francisco, CA","America/Los_Angeles"],[0,2,"2026-06-22T17:00:00Z","AT&T Stadium","Dallas, TX","America/Chicago"],[3,1,"2026-06-23T03:00:00Z","Levi's Stadium","San Francisco, CA","America/Los_Angeles"],[1,2,"2026-06-28T02:00:00Z","Arrowhead Stadium","Kansas City, MO","America/Chicago"],[3,0,"2026-06-28T02:00:00Z","AT&T Stadium","Dallas, TX","America/Chicago"]],
+  K:[[0,1,"2026-06-17T17:00:00Z","NRG Stadium","Houston, TX","America/Chicago"],[2,3,"2026-06-18T02:00:00Z","Estadio Azteca","Mexico City, MX","America/Mexico_City"],[0,2,"2026-06-23T17:00:00Z","NRG Stadium","Houston, TX","America/Chicago"],[3,1,"2026-06-24T02:00:00Z","Estadio Akron","Guadalajara, MX","America/Mexico_City"],[3,0,"2026-06-27T23:30:00Z","Hard Rock Stadium","Miami, FL","America/New_York"],[1,2,"2026-06-27T23:30:00Z","Mercedes-Benz Stadium","Atlanta, GA","America/New_York"]],
+  L:[[0,1,"2026-06-17T20:00:00Z","AT&T Stadium","Dallas, TX","America/Chicago"],[2,3,"2026-06-17T23:00:00Z","BMO Field","Toronto, ON","America/Toronto"],[0,2,"2026-06-23T20:00:00Z","Gillette Stadium","Boston, MA","America/New_York"],[3,1,"2026-06-23T23:00:00Z","BMO Field","Toronto, ON","America/Toronto"],[3,0,"2026-06-27T21:00:00Z","MetLife Stadium","New York, NY","America/New_York"],[1,2,"2026-06-27T21:00:00Z","Lincoln Financial Field","Philadelphia, PA","America/New_York"]],
 };
 
 /* ─── STATE ─── */
@@ -454,20 +383,72 @@ function groupTeams(g){return TEAMS.filter(t=>t.group===g)}
 function groupMatchups(g){
   const sched=GROUP_SCHEDULE[g];
   const teams=groupTeams(g);
-  return sched.map(([hi,ai,date,time,venue])=>({
+  return sched.map(([hi,ai,utcISO,stadium,city,venueTz])=>({
     home:teams[hi].name, away:teams[ai].name,
-    date,time,venue
+    utcISO, stadium, city, venueTz
   }));
 }
 
-function fmtDate(dateStr,timeStr){
-  const d=new Date(dateStr+"T"+timeStr+":00");
-  return d.toLocaleDateString("en-US",{month:"short",day:"numeric"})+"\n"+d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+let selectedTZ = localStorage.getItem('wc2026_tz') || Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+const TIMEZONES = [
+  {label:"Detect automatically",      tz:"auto"},
+  {label:"ET — New York",             tz:"America/New_York"},
+  {label:"CT — Chicago",              tz:"America/Chicago"},
+  {label:"MT — Denver",               tz:"America/Denver"},
+  {label:"PT — Los Angeles",          tz:"America/Los_Angeles"},
+  {label:"AT — Anchorage",            tz:"America/Anchorage"},
+  {label:"HT — Honolulu",             tz:"Pacific/Honolulu"},
+  {label:"CT — Toronto",              tz:"America/Toronto"},
+  {label:"PT — Vancouver",            tz:"America/Vancouver"},
+  {label:"CT — Mexico City",          tz:"America/Mexico_City"},
+  {label:"CT — Monterrey",            tz:"America/Monterrey"},
+  {label:"UTC",                       tz:"UTC"},
+  {label:"CET — Paris/Berlin",        tz:"Europe/Paris"},
+  {label:"EET — Athens/Yerevan",      tz:"Asia/Yerevan"},
+  {label:"MSK — Moscow",              tz:"Europe/Moscow"},
+  {label:"GST — Dubai",               tz:"Asia/Dubai"},
+  {label:"IST — India",               tz:"Asia/Kolkata"},
+  {label:"CST — China",               tz:"Asia/Shanghai"},
+  {label:"JST — Japan/Korea",         tz:"Asia/Tokyo"},
+  {label:"AEST — Sydney",             tz:"Australia/Sydney"},
+];
+
+function initTZSelector(){
+  const sel = document.getElementById('tzSelect');
+  const auto = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  TIMEZONES.forEach(({label,tz})=>{
+    const opt = document.createElement('option');
+    opt.value = tz;
+    opt.textContent = tz==='auto' ? `Auto (${auto})` : label;
+    sel.appendChild(opt);
+  });
+  // set current selection
+  const saved = localStorage.getItem('wc2026_tz');
+  sel.value = saved || 'auto';
 }
 
-function matchStatus(dateStr,timeStr){
+function changeTZ(val){
+  if(val==='auto'){
+    selectedTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    localStorage.removeItem('wc2026_tz');
+  } else {
+    selectedTZ = val;
+    localStorage.setItem('wc2026_tz', val);
+  }
+  buildGroupsUI();
+}
+
+function fmtDate(utcISO){
+  const d=new Date(utcISO);
+  const datePart=d.toLocaleDateString("en-US",{timeZone:selectedTZ,month:"short",day:"numeric",weekday:"short"});
+  const timePart=d.toLocaleTimeString("en-US",{timeZone:selectedTZ,hour:"numeric",minute:"2-digit"});
+  return datePart+"\n"+timePart;
+}
+
+function matchStatus(utcISO){
   const now=new Date();
-  const mt=new Date(dateStr+"T"+timeStr+":00");
+  const mt=new Date(utcISO);
   const diff=(mt-now)/60000;
   if(diff>90) return "upcoming";
   if(diff>-110) return "live";
@@ -528,6 +509,31 @@ function switchTab(t){
   if(t==="bracket") renderBracket();
 }
 
+/* ── API KEY MANAGEMENT ── */
+const API_KEY_STORAGE = "wc2026_apikey";
+function getApiKey(){ return localStorage.getItem(API_KEY_STORAGE)||""; }
+function saveApiKey(){
+  const val=document.getElementById("apiKeyInput").value.trim();
+  if(!val){ alert("Please enter a key"); return; }
+  localStorage.setItem(API_KEY_STORAGE,val);
+  updateKeyIndicator();
+initTZSelector();
+  closeApiKeyModal();
+  fetchLiveScores();
+}
+function openApiKeyModal(){
+  const existing=getApiKey();
+  if(existing) document.getElementById("apiKeyInput").value=existing;
+  document.getElementById("apiKeyModal").style.display="flex";
+}
+function closeApiKeyModal(){ document.getElementById("apiKeyModal").style.display="none"; }
+function updateKeyIndicator(){
+  const el=document.getElementById("keyIndicator");
+  const key=getApiKey();
+  if(key){ el.textContent="🔑 key set"; el.classList.add("set"); }
+  else { el.textContent="🔑 no key set"; el.classList.remove("set"); }
+}
+
 /* ─── LIVE SCORE UPDATE via Claude AI ─── */
 async function fetchLiveScores(){
   const btn=document.getElementById("updateBtn");
@@ -538,8 +544,8 @@ async function fetchLiveScores(){
   const allMatches=[];
   GROUPS.forEach(g=>{
     groupMatchups(g).forEach((m,mi)=>{
-      if(m.date<=today){
-        allMatches.push({key:`${g}_${mi}`,home:m.home,away:m.away,date:m.date});
+      if(new Date(m.utcISO)<=new Date()){
+        allMatches.push({key:`${g}_${mi}`,home:m.home,away:m.away,date:m.utcISO.slice(0,10)});
       }
     });
   });
@@ -547,6 +553,12 @@ async function fetchLiveScores(){
   if(allMatches.length===0){
     showStatus("info","No matches scheduled yet — tournament starts June 11, 2026.");
     btn.disabled=false;btn.textContent="⟳ Update scores";return;
+  }
+
+  if(!getApiKey()){
+    btn.disabled=false;btn.textContent="⟳ Update scores";
+    openApiKeyModal();
+    return;
   }
 
   /* No web_search tool — strict system prompt forces clean JSON-only output */
@@ -565,7 +577,7 @@ async function fetchLiveScores(){
   try{
     const res=await fetch("https://api.anthropic.com/v1/messages",{
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
       body:JSON.stringify({
         model:"claude-sonnet-4-6",
         max_tokens:4096,
@@ -692,10 +704,10 @@ function buildGroupsUI(){
     matchups.forEach((m,mi)=>{
       const key=`${g}_${mi}`;
       const sc=state.scores[key]||{a:"",b:""};
-      const status=matchStatus(m.date,m.time);
+      const status=matchStatus(m.utcISO);
       const played=sc.a!==""&&sc.b!=="";
       const ta=getTeam(m.home),tb=getTeam(m.away);
-      const dateLabel=fmtDate(m.date,m.time);
+      const dateLabel=fmtDate(m.utcISO);
       const [datePart,timePart]=dateLabel.split("\n");
       const autoA=sc.autoFilled?"auto-filled":"";
       const row=document.createElement("div");
@@ -716,7 +728,7 @@ function buildGroupsUI(){
         </div>
         <span class="mt right">${m.away}</span>
         <span class="mf">${tb.flag}</span>
-        <span class="match-venue" title="${m.venue}">${m.venue.split(",")[0]}</span>`;
+        <span class="match-venue" title="${m.stadium} · ${m.city}">${m.stadium}</span>`;
       ml.appendChild(row);
     });
     ms.appendChild(ml);card.appendChild(ms);
@@ -854,6 +866,8 @@ loadState();
 buildGroupsUI();
 renderBracket();
 document.getElementById("saveIndicator").textContent="All changes saved";
+updateKeyIndicator();
+initTZSelector();
 
 // Kick off initial fetch then schedule recurring
 (async ()=>{
