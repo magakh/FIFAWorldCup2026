@@ -135,7 +135,6 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 1
 .tz-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
 .tz-wrap select{font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);cursor:pointer}
 
-.countdown{font-size:11px;color:var(--text3);min-width:110px;text-align:right}
 .badge-sg{display:inline-flex;align-items:center;gap:3px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border);border-radius:4px;padding:1px 5px;font-size:10px;font-weight:500;vertical-align:middle}
 </style>
 </head>
@@ -146,7 +145,6 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 1
   <div class="hdr-btns">
     <span id="saveIndicator">All changes saved</span>
     <button class="btn primary" id="updateBtn" onclick="fetchLiveScores()">⟳ Update scores</button>
-    <span class="countdown" id="countdown"></span>
     <div class="tz-wrap">
       <span>🕐</span>
       <select id="tzSelect" onchange="changeTZ(this.value)"></select>
@@ -185,7 +183,7 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 1
 
 <div class="view active" id="view-groups">
   <div class="top-bar">
-    <div style="font-size:12px;color:var(--text2)">Scores auto-update every 3 minutes. Hit <strong>Update scores</strong> to refresh now.</div>
+    <div style="font-size:12px;color:var(--text2)">Scores refresh hourly automatically. Hit <strong>Update scores</strong> to pull latest now (requires API key).</div>
   </div>
   <div class="groups-grid" id="groupsGrid"></div>
 </div>
@@ -856,21 +854,7 @@ function updateKeyBtn(){
   if(el) el.textContent = getKey() ? "key ✓" : "Set key";
 }
 
-/* ─── AUTO-REFRESH every 3 minutes ─── */
-const REFRESH_MS=3*60*1000;
-let nextAt=0,cdTimer=null,rfTimer=null;
-
-function startRefreshCycle(){
-  clearTimeout(rfTimer);clearInterval(cdTimer);
-  nextAt=Date.now()+REFRESH_MS;
-  rfTimer=setTimeout(async()=>{await fetchLiveScores();startRefreshCycle();},REFRESH_MS);
-  cdTimer=setInterval(()=>{
-    const s=Math.max(0,Math.round((nextAt-Date.now())/1000));
-    const m=Math.floor(s/60),sec=String(s%60).padStart(2,'0');
-    const el=document.getElementById('countdown');
-    if(el) el.textContent=s>0?`next update ${m}:${sec}`:'updating…';
-  },1000);
-}
+/* auto-refresh removed — page redeploys hourly via GitHub Actions */
 
 /* ─── INIT ─── */
 loadState();
@@ -880,14 +864,7 @@ renderBracket();
 document.getElementById('saveIndicator').textContent="All changes saved";
 updateKeyBtn();
 
-(async()=>{
-  if(!getKey()){
-    openKeyModal();
-  } else {
-    await fetchLiveScores();
-  }
-  startRefreshCycle();
-})();
+// No auto-refresh — update manually via button or wait for hourly deploy
 </script>
 </body>
 </html>
