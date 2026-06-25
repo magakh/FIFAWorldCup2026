@@ -705,8 +705,16 @@ function slotLabel(s){
   if(s.p===3) return s.label;
   return(s.p===1?"Winner ":"Runner-up ")+"Group "+s.g;
 }
-function resolveSlot(s){
-  if(s.p===3) return{name:null,flag:"",label:s.label,sublabel:s.label,group:null,is3rd:true};
+function resolveSlot(s,mi){
+  if(s.p===3){
+    // Check if a 3rd-place team has been picked for this slot
+    const picked=(mi!==undefined)?state.bracket['3rd_'+mi]:null;
+    if(picked){
+      const t=getTeam(picked);
+      return{name:picked,flag:t?t.flag:"",label:picked,sublabel:s.label,group:t?t.group:null,is3rd:true};
+    }
+    return{name:null,flag:"",label:s.label,sublabel:s.label,group:null,is3rd:true};
+  }
   const q=getQualifiers(s.g);
   const name=s.p===1?q.first:q.second;
   if(!name) return{name:null,flag:"",label:slotLabel(s),sublabel:slotLabel(s),group:s.g,is3rd:false};
@@ -714,9 +722,9 @@ function resolveSlot(s){
   return{name,flag:t?t.flag:"",label:name,sublabel:slotLabel(s),group:s.g,is3rd:false};
 }
 function getR32Seeds(){
-  return R32_SCHEDULE.map(r=>({
+  return R32_SCHEDULE.map((r,mi)=>({
     matchNum:r.m,utc:r.utc,venue:r.venue,city:r.city,
-    t1:resolveSlot(r.s1),t2:resolveSlot(r.s2),
+    t1:resolveSlot(r.s1,mi),t2:resolveSlot(r.s2,mi),
   }));
 }
 
@@ -776,9 +784,14 @@ function renderBracket(){
         const mainLabel = team.name || team.label || "TBD";
         const sub = (ri===0 && team.sublabel && team.sublabel!==mainLabel)
           ? `<span style="font-size:8px;color:var(--text3);display:block;line-height:1.3;margin-top:1px;font-style:normal">${team.sublabel}</span>` : "";
-        slot.innerHTML=`<span class="bf">${team.flag||""}</span><span class="bn${team.name?"":" empty"}" style="display:flex;flex-direction:column;gap:0">${mainLabel}${sub}</span>`;
+        const repick = (team.is3rd && team.name && ri===0)
+          ? `<span class="repick3rd" title="Change 3rd-place pick" style="font-size:10px;color:var(--blue-text);cursor:pointer;padding:0 4px">⌄</span>` : "";
+        slot.innerHTML=`<span class="bf">${team.flag||""}</span><span class="bn${team.name?"":" empty"}" style="display:flex;flex-direction:column;gap:0">${mainLabel}${sub}</span>${repick}`;
         if(team.name) slot.onclick=()=>pickWinner(ri,mi,team.name,match);
         else if(team.is3rd && ri===0) slot.onclick=()=>pick3rd(ri,mi,team,match,slot);
+        // Re-pick handler for filled 3rd slots
+        const rp=slot.querySelector('.repick3rd');
+        if(rp) rp.onclick=(e)=>{e.stopPropagation();pick3rd(ri,mi,{label:R32_SCHEDULE[mi].s2.p===3?R32_SCHEDULE[mi].s2.label:R32_SCHEDULE[mi].s1.label},match,slot);};
         box.appendChild(slot);
       });
       wrap.appendChild(box);mc.appendChild(wrap);
@@ -845,7 +858,8 @@ function pick3rd(round,mi,team,match,slotEl){
   });
   sel.onchange=()=>{
     if(sel.value){
-      state.bracket[round+'_'+mi]=sel.value;
+      // Store which team fills this 3rd-place SLOT (not the match winner)
+      state.bracket['3rd_'+mi]=sel.value;
       autoSave();renderBracket();
     }
   };
