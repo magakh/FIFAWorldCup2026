@@ -156,7 +156,30 @@ img.emoji{height:1.2em;width:1.2em;margin:0 .05em 0 .1em;vertical-align:-0.15em;
   </div>
 </header>
 
+<div id="statusBar"></div>
 
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('groups')">Group Stage</div>
+  <div class="tab" onclick="switchTab('bracket')">Knockout Bracket</div>
+</div>
+
+<div class="view active" id="view-groups">
+  <div class="groups-grid" id="groupsGrid"></div>
+</div>
+
+<div class="view" id="view-bracket">
+  <div class="top-bar">
+    <div style="font-size:12px;color:var(--text2)">Click a team to advance them. <span class="badge-sg">⚠ same group</span> = same-group rematch.</div>
+    <button class="btn danger" onclick="resetBracket()">↺ Reset bracket picks</button>
+  </div>
+  <div class="bracket-wrap"><div class="bracket" id="bracketEl"></div></div>
+  <div class="champion-bar">
+    <div class="trophy-icon">🏆</div>
+    <div>
+      <div class="champ-label">World Cup Champion 2026</div>
+      <div id="champDisplay" class="champ-empty">TBD</div>
+    </div>
+  </div>
 </div>
 
 <script>
