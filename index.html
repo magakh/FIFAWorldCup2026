@@ -195,6 +195,7 @@ img.emoji{height:1.2em;width:1.2em;margin:0 .05em 0 .1em;vertical-align:-0.15em;
 <div class="view" id="view-bracket">
   <div class="top-bar">
     <div style="font-size:12px;color:var(--text2)">Click a team to advance them. <span class="badge-sg">⚠ same group</span> = same-group rematch.</div>
+    <button class="btn danger" onclick="resetBracket()">↺ Reset bracket picks</button>
   </div>
   <div class="bracket-wrap"><div class="bracket" id="bracketEl"></div></div>
   <div class="champion-bar">
@@ -871,6 +872,12 @@ function pickWinner(round,mi,name,match){
 function clearDown(round,mi){
   const key=`${round+1}_${Math.floor(mi/2)}`;
   if(state.bracket[key]){delete state.bracket[key];clearDown(round+1,Math.floor(mi/2));}
+}
+function resetBracket(){
+  if(!confirm('Reset all knockout bracket picks?\n\nThis clears your simulation only — group-stage scores stay intact.')) return;
+  state.bracket={};
+  autoSave();
+  renderBracket();
 }
 
 /* ─── API KEY MANAGEMENT ─── */
