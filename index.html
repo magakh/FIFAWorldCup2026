@@ -139,207 +139,7 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 1
 .tz-wrap select{font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);cursor:pointer}
 
 .badge-sg{display:inline-flex;align-items:center;gap:3px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border);border-radius:4px;padding:1px 5px;font-size:10px;font-weight:500;vertical-align:middle}
-</style>
-</head>
-<body>
-
-<header>
-  <div class="logo">⚽ World Cup 2026</div>
-  <div class="hdr-btns">
-    <span id="saveIndicator">All changes saved</span>
-    <button class="btn primary" id="updateBtn" onclick="fetchLiveScores()">⟳ Update scores</button>
-    <div class="tz-wrap">
-      <span>🕐</span>
-      <select id="tzSelect" onchange="changeTZ(this.value)"></select>
-    </div>
-    <button class="btn" onclick="shareLink()" id="shareBtn">🔗 Share</button>
-    <button class="btn" id="keyBtn" onclick="openKeyModal()" title="Set Anthropic API key">🔑 <span id="keyBtnLabel">Set key</span></button>
-  </div>
-</header>
-
-<!-- API Key Modal -->
-<div id="keyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center">
-  <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;width:min(380px,92vw);padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
-    <h3 style="font-size:16px;font-weight:600;margin-bottom:8px">🔑 Anthropic API Key</h3>
-    <p style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px">
-      Enter your Anthropic API key to enable live score updates every 3 minutes.<br>
-      Your key is stored <strong>only in this browser</strong> — never sent anywhere except Anthropic's API.
-    </p>
-    <input type="password" id="keyInput" placeholder="sk-ant-…" autocomplete="off" spellcheck="false"
-      style="width:100%;padding:8px 11px;border:1px solid var(--border2);border-radius:7px;font-size:13px;font-family:monospace;background:var(--bg2);color:var(--text);margin-bottom:10px">
-    <div style="display:flex;gap:8px">
-      <button onclick="saveKey()" style="flex:1;padding:8px;border-radius:7px;border:none;background:var(--blue-text);color:#fff;font-size:13px;font-weight:600;cursor:pointer">Save key</button>
-      <button onclick="closeKeyModal()" style="padding:8px 14px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer">Skip</button>
-    </div>
-    <p style="font-size:10px;color:var(--text3);margin-top:10px;line-height:1.5">
-      Get a free key at <strong>console.anthropic.com</strong> → API Keys
-    </p>
-  </div>
-</div>
-
-<div id="statusBar"></div>
-
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('groups')">Group Stage</div>
-  <div class="tab" onclick="switchTab('bracket')">Knockout Bracket</div>
-</div>
-
-<div class="view active" id="view-groups">
-  <div class="top-bar">
-    <div style="font-size:12px;color:var(--text2)">Hit <strong>Update scores</strong> to pull latest scores (requires API key).</div>
-  </div>
-  <div class="groups-grid" id="groupsGrid"></div>
-</div>
-
-<div class="view" id="view-bracket">
-  <div class="top-bar">
-    <div style="font-size:12px;color:var(--text2)">Click a team to advance them. <span class="badge-sg">⚠ same group</span> = same-group rematch.</div>
-  </div>
-  <div class="bracket-wrap"><div class="bracket" id="bracketEl"></div></div>
-  <div class="champion-bar">
-    <div class="trophy-icon">🏆</div>
-    <div>
-      <div class="champ-label">World Cup Champion 2026</div>
-      <div id="champDisplay" class="champ-empty">TBD</div>
-    </div>
-  </div>
-</div>
-
-<script></script>
-<style>
 img.emoji{height:1.2em;width:1.2em;margin:0 .05em 0 .1em;vertical-align:-0.15em;display:inline}
-
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh;font-size:14px}
-:root{
-  --bg:#fff;--bg2:#f5f5f0;--bg3:#ebebeb;
-  --text:#1a1a1a;--text2:#666;--text3:#aaa;
-  --border:#e0e0e0;--border2:#bbb;
-  --blue-bg:#E6F1FB;--blue-text:#185FA5;--blue-border:#B5D4F4;
-  --green-bg:#EAF3DE;--green-text:#3B6D11;--green-border:#C0DD97;
-  --amber-bg:#FAEEDA;--amber-text:#854F0B;--amber-border:#FAC775;
-  --red-bg:#FCEBEB;--red-text:#A32D2D;--red-border:#F7C1C1;
-  --gold:#BA7517;
-}
-@media(prefers-color-scheme:dark){:root{
-  --bg:#1e1e1e;--bg2:#141414;--bg3:#2a2a2a;
-  --text:#f0f0f0;--text2:#aaa;--text3:#555;
-  --border:#2e2e2e;--border2:#555;
-  --blue-bg:#0C447C;--blue-text:#B5D4F4;--blue-border:#185FA5;
-  --green-bg:#27500A;--green-text:#C0DD97;--green-border:#3B6D11;
-  --amber-bg:#633806;--amber-text:#FAC775;--amber-border:#854F0B;
-  --red-bg:#501313;--red-text:#F09595;--red-border:#A32D2D;
-  --gold:#FAC775;
-}}
-
-header{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.logo{font-size:17px;font-weight:600}
-.hdr-btns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.btn{padding:6px 13px;border-radius:7px;border:1px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;font-size:12px;font-weight:500;display:flex;align-items:center;gap:5px}
-.btn:hover{background:var(--bg3)}
-.btn.primary{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-border)}
-.btn.primary:hover{opacity:.85}
-.btn.success{background:var(--green-bg);color:var(--green-text);border-color:var(--green-border)}
-.btn.danger{background:var(--red-bg);color:var(--red-text);border-color:var(--red-border)}
-.btn:disabled{opacity:.5;cursor:default}
-.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg);padding:0 18px}
-.tab{padding:9px 15px;font-size:13px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500}
-.tab:hover{color:var(--text)}
-.tab.active{color:var(--blue-text);border-bottom-color:var(--blue-text)}
-.view{display:none;padding:14px 18px}
-.view.active{display:block}
-.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
-
-#statusBar{font-size:12px;padding:0 18px;display:flex;align-items:center;gap:7px;min-height:0;overflow:hidden;transition:min-height .15s}
-#statusBar.info{min-height:38px;background:var(--blue-bg);color:var(--blue-text)}
-#statusBar.ok{min-height:38px;background:var(--green-bg);color:var(--green-text)}
-#statusBar.err{min-height:38px;background:var(--red-bg);color:var(--red-text)}
-.spin{display:inline-block;animation:spin .7s linear infinite;font-size:13px}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-#saveIndicator{font-size:11px;color:var(--text3);transition:opacity .4s}
-
-.groups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px}
-.group-card{background:var(--bg);border:1px solid var(--border);border-radius:11px;overflow:hidden}
-.group-header{padding:8px 13px;background:var(--bg3);display:flex;align-items:center;justify-content:space-between}
-.group-title{font-size:14px;font-weight:600;color:var(--text)}
-.group-meta{font-size:10px;color:var(--text3)}
-
-.standings{width:100%;border-collapse:collapse}
-.standings th{font-size:10px;font-weight:600;color:var(--text3);text-align:center;padding:5px 3px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.04em}
-.standings th.left{text-align:left;padding-left:10px}
-.standings td{font-size:11px;text-align:center;padding:5px 3px;border-bottom:1px solid var(--border);color:var(--text2)}
-.standings td.left{text-align:left;padding-left:10px}
-.standings tr:last-child td{border-bottom:none}
-.team-cell{display:flex;align-items:center;gap:6px}
-.tf{font-size:14px;flex-shrink:0}
-.tn{font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px}
-.pos-badge{width:15px;height:15px;border-radius:50%;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.pos-1{background:var(--blue-bg);color:var(--blue-text)}
-.pos-2{background:var(--green-bg);color:var(--green-text)}
-.pos-o{background:var(--bg3);color:var(--text3)}
-.pts-cell{font-weight:700;color:var(--text)}
-.gd-pos{color:var(--green-text)}
-.gd-neg{color:var(--red-text)}
-.standings tr.row-1 td{background:var(--blue-bg)}
-.standings tr.row-1 .tn{color:var(--blue-text)}
-.standings tr.row-2 td{background:var(--green-bg)}
-.standings tr.row-2 .tn{color:var(--green-text)}
-
-.matches-section{border-top:1px solid var(--border)}
-.matches-list{display:flex;flex-direction:column}
-.match-row{display:flex;align-items:center;gap:5px;padding:6px 10px;border-bottom:1px solid var(--border);position:relative}
-.match-row:last-child{border-bottom:none}
-.match-row.played-row{background:var(--bg2)}
-.match-date-col{display:flex;flex-direction:column;align-items:center;min-width:42px;flex-shrink:0}
-.match-date{font-size:9px;color:var(--text3);line-height:1.2;text-align:center;white-space:nowrap}
-.match-date.upcoming{color:var(--amber-text);font-weight:500}
-.match-date.live{color:var(--red-text);font-weight:600}
-.match-date.done{color:var(--green-text)}
-.mf{font-size:12px;flex-shrink:0}
-.mt{font-size:11px;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
-.mt.right{text-align:right}
-.score-box{display:flex;align-items:center;gap:3px;flex-shrink:0}
-.score-input{width:26px;height:24px;border:1px solid var(--border2);border-radius:4px;text-align:center;font-size:12px;font-weight:700;background:var(--bg);color:var(--text);padding:0;-moz-appearance:textfield}
-.score-input::-webkit-inner-spin-button,.score-input::-webkit-outer-spin-button{-webkit-appearance:none}
-.score-input:focus{outline:none;border-color:var(--blue-text);background:var(--blue-bg)}
-.score-input.auto-filled{background:var(--green-bg);border-color:var(--green-border);color:var(--green-text)}
-.score-sep{font-size:10px;color:var(--text3)}
-.match-venue{font-size:9px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70px}
-
-.group-legend{padding:6px 10px;display:flex;gap:12px;border-top:1px solid var(--border)}
-.leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)}
-.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-
-.bracket-wrap{overflow-x:auto;padding-bottom:10px}
-.bracket{display:flex;align-items:stretch;min-width:max-content}
-.bracket-round{display:flex;flex-direction:column;min-width:148px}
-.round-hdr{font-size:10px;font-weight:600;color:var(--text2);text-align:center;padding:6px;text-transform:uppercase;letter-spacing:.05em;background:var(--bg);border-bottom:1px solid var(--border);border-right:1px solid var(--border)}
-.matches-col{display:flex;flex-direction:column;flex:1}
-.match-wrapper{display:flex;flex:1;align-items:center;position:relative}
-.match-wrapper::after{content:'';position:absolute;right:-1px;top:50%;width:1px;height:50%;background:var(--border)}
-.match-wrapper:last-child::after{display:none}
-.match-wrapper.top::after{top:50%;height:50%}
-.match-wrapper.bottom::after{top:0;height:50%}
-.bmatch{width:136px;margin:4px 7px;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:var(--bg)}
-.bs{display:flex;align-items:center;gap:5px;padding:5px 7px;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border)}
-.bs:last-child{border-bottom:none}
-.bs .bf{font-size:12px;width:16px;text-align:center;flex-shrink:0}
-.bs .bn{font-size:11px;font-weight:500;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bs .bn.empty{color:var(--text3);font-weight:400;font-style:italic}
-.bs.bwin{background:var(--blue-bg)}
-.bs.bwin .bn{color:var(--blue-text)}
-.bs.bclick:hover{background:var(--bg3)}
-.champion-bar{background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:13px 16px;margin-top:12px;display:flex;align-items:center;gap:13px}
-.trophy-icon{font-size:26px}
-.champ-label{font-size:10px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
-.champ-name{font-size:19px;font-weight:600;color:var(--gold)}
-.champ-empty{font-size:13px;color:var(--text3);font-style:italic}
-
-.tz-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
-.tz-wrap select{font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);cursor:pointer}
-
-.badge-sg{display:inline-flex;align-items:center;gap:3px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border);border-radius:4px;padding:1px 5px;font-size:10px;font-weight:500;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -977,7 +777,7 @@ function renderBracket(){
           ? `<span style="font-size:8px;color:var(--text3);display:block;line-height:1.3;margin-top:1px;font-style:normal">${team.sublabel}</span>` : "";
         slot.innerHTML=`<span class="bf">${team.flag||""}</span><span class="bn${team.name?"":" empty"}" style="display:flex;flex-direction:column;gap:0">${mainLabel}${sub}</span>`;
         if(team.name) slot.onclick=()=>pickWinner(ri,mi,team.name,match);
-        else if(team.is3rd && ri===0) slot.onclick=()=>pick3rd(ri,mi,team,match);
+        else if(team.is3rd && ri===0) slot.onclick=()=>pick3rd(ri,mi,team,match,slot);
         box.appendChild(slot);
       });
       wrap.appendChild(box);mc.appendChild(wrap);
@@ -1010,17 +810,51 @@ function renderBracket(){
   el.appendChild(champCol);
   if(typeof twemoji !== 'undefined') setTimeout(()=>twemoji.parse(el,{folder:'svg',ext:'.svg'}),50);
 }
-function pick3rd(round,mi,team,match){
-  const name=prompt('Enter the best 3rd-place team for this slot:\n('+team.label+')','');
-  if(!name||!name.trim()) return;
-  const trimmed=name.trim();
-  const found=TEAMS.find(t=>t.name.toLowerCase()===trimmed.toLowerCase());
-  if(!found){alert('Team not found: '+trimmed+'\nCheck spelling against group stage.');return;}
-  // Treat as if this slot is now a named team - store in bracket
-  state.bracket[round+'_'+mi+'_3rd']=found.name;
-  // Override the slot by rebuilding — simplest: just pick as winner
-  state.bracket[round+'_'+mi]=found.name;
-  autoSave();renderBracket();
+function get3rdPlaceTeam(g){
+  // Returns {name, pts, gd, gf} of the team currently in 3rd place in group g
+  const s=computeStandings(g);
+  return s[2]?{name:s[2].name,pts:s[2].pts,gd:s[2].gd,gf:s[2].gf}:null;
+}
+function pick3rd(round,mi,team,match,slotEl){
+  // Parse eligible groups from label like "Best 3rd A/B/C/D/F"
+  const m=(team.label||'').match(/Best 3rd ([A-L/]+)/);
+  if(!m){return;}
+  const groups=m[1].split('/');
+  // Build dropdown of 3rd-place teams from those groups
+  const sel=document.createElement('select');
+  sel.style.cssText='width:100%;font-size:11px;padding:3px;border:1px solid var(--blue-text);border-radius:4px;background:var(--bg);color:var(--text)';
+  const blank=document.createElement('option');
+  blank.value='';blank.textContent='— pick 3rd (best first) —';sel.appendChild(blank);
+  // Gather eligible 3rd-place teams and sort by pts, then GD, then GF (best first)
+  const eligible=groups.map(g=>({g,t:get3rdPlaceTeam(g)})).filter(x=>x.t&&x.t.name);
+  eligible.sort((a,b)=>b.t.pts-a.t.pts||b.t.gd-a.t.gd||b.t.gf-a.t.gf);
+  const tbdGroups=groups.filter(g=>!get3rdPlaceTeam(g));
+  eligible.forEach(({g,t})=>{
+    const opt=document.createElement('option');
+    opt.value=t.name;
+    const gds=t.gd>0?'+'+t.gd:t.gd;
+    opt.textContent='Grp '+g+': '+t.name+' ('+t.pts+'pts, '+gds+')';
+    sel.appendChild(opt);
+  });
+  tbdGroups.forEach(g=>{
+    const opt=document.createElement('option');
+    opt.value='';opt.disabled=true;
+    opt.textContent='Grp '+g+': (TBD)';
+    sel.appendChild(opt);
+  });
+  sel.onchange=()=>{
+    if(sel.value){
+      state.bracket[round+'_'+mi]=sel.value;
+      autoSave();renderBracket();
+    }
+  };
+  sel.onclick=e=>e.stopPropagation();
+  // Replace slot content with the dropdown
+  if(slotEl){
+    slotEl.innerHTML='';
+    slotEl.appendChild(sel);
+    sel.focus();
+  }
 }
 function pickWinner(round,mi,name,match){
   if(!name) return;
