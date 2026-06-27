@@ -741,46 +741,47 @@ function renderBracket(){
   if(typeof twemoji !== 'undefined') setTimeout(()=>twemoji.parse(el,{folder:'svg',ext:'.svg'}),50);
 }
 function get3rdPlaceTeam(g){
-  // Returns {name, pts, gd, gf} of the team currently in 3rd place in group g
+  // Returns {name, pts, gd, gf, g} of the team currently in 3rd place in group g
   const s=computeStandings(g);
-  return s[2]?{name:s[2].name,pts:s[2].pts,gd:s[2].gd,gf:s[2].gf}:null;
+  return s[2]?{name:s[2].name,pts:s[2].pts,gd:s[2].gd,gf:s[2].gf,g:g}:null;
+}
+function allThirdPlaceRanked(){
+  // Gather the 3rd-place team from every group, ranked best-first (FIFA: pts, GD, GF)
+  const all=GROUPS.map(g=>get3rdPlaceTeam(g)).filter(t=>t&&t.name);
+  all.sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf);
+  return all;
 }
 function pick3rd(round,mi,team,match,slotEl){
-  // Parse eligible groups from label like "Best 3rd A/B/C/D/F"
-  const m=(team.label||'').match(/Best 3rd ([A-L/]+)/);
-  if(!m){return;}
-  const groups=m[1].split('/');
-  // Build dropdown of 3rd-place teams from those groups
+  // Show ALL 12 third-place teams, ranked best-first; top 8 marked as qualified
+  const ranked=allThirdPlaceRanked();
   const sel=document.createElement('select');
   sel.style.cssText='width:100%;font-size:11px;padding:3px;border:1px solid var(--blue-text);border-radius:4px;background:var(--bg);color:var(--text)';
   const blank=document.createElement('option');
-  blank.value='';blank.textContent='— pick 3rd (best first) —';sel.appendChild(blank);
-  // Gather eligible 3rd-place teams and sort by pts, then GD, then GF (best first)
-  const eligible=groups.map(g=>({g,t:get3rdPlaceTeam(g)})).filter(x=>x.t&&x.t.name);
-  eligible.sort((a,b)=>b.t.pts-a.t.pts||b.t.gd-a.t.gd||b.t.gf-a.t.gf);
-  const tbdGroups=groups.filter(g=>!get3rdPlaceTeam(g));
-  eligible.forEach(({g,t})=>{
+  blank.value='';blank.textContent='— pick best 3rd —';sel.appendChild(blank);
+  ranked.forEach((t,idx)=>{
     const opt=document.createElement('option');
     opt.value=t.name;
     const gds=t.gd>0?'+'+t.gd:t.gd;
-    opt.textContent='Grp '+g+': '+t.name+' ('+t.pts+'pts, '+gds+')';
+    const mark=idx<8?'✅':'❌';
+    const rank=idx<8?('#'+(idx+1)):'OUT';
+    opt.textContent=`${mark} ${rank} Grp ${t.g}: ${t.name} (${t.pts}pts, ${gds})`;
     sel.appendChild(opt);
   });
-  tbdGroups.forEach(g=>{
+  // Note any groups whose 3rd place isn't decided yet
+  const tbd=GROUPS.filter(g=>!get3rdPlaceTeam(g));
+  tbd.forEach(g=>{
     const opt=document.createElement('option');
     opt.value='';opt.disabled=true;
-    opt.textContent='Grp '+g+': (TBD)';
+    opt.textContent='Grp '+g+': (group not finished)';
     sel.appendChild(opt);
   });
   sel.onchange=()=>{
     if(sel.value){
-      // Store which team fills this 3rd-place SLOT (not the match winner)
       state.bracket['3rd_'+mi]=sel.value;
       autoSave();renderBracket();
     }
   };
   sel.onclick=e=>e.stopPropagation();
-  // Replace slot content with the dropdown
   if(slotEl){
     slotEl.innerHTML='';
     slotEl.appendChild(sel);
