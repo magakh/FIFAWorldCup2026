@@ -746,29 +746,50 @@ function get3rdPlaceTeam(g){
   return s[2]?{name:s[2].name,pts:s[2].pts,gd:s[2].gd,gf:s[2].gf,g:g}:null;
 }
 function allThirdPlaceRanked(){
-  // Gather the 3rd-place team from every group, ranked best-first (FIFA: pts, GD, GF)
+  // All 12 third-place teams ranked best-first (FIFA: pts, GD, GF)
   const all=GROUPS.map(g=>get3rdPlaceTeam(g)).filter(t=>t&&t.name);
   all.sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf);
   return all;
 }
+function qualifiedThirdGroups(){
+  // The 8 groups whose 3rd-place team is currently in the top 8 (qualified)
+  return allThirdPlaceRanked().slice(0,8).map(t=>t.g);
+}
+// Official FIFA per-slot eligible 3rd-place groups (from R32 regulations)
+const SLOT_ELIGIBLE = {
+  74:['A','B','C','D','F'],  // Winner E
+  77:['C','D','F','G','H'],  // Winner I
+  79:['C','E','F','H','I'],  // Winner A
+  80:['E','H','I','J','K'],  // Winner L
+  81:['B','E','F','I','J'],  // Winner D
+  82:['A','E','H','I','J'],  // Winner G
+  85:['E','F','G','I','J'],  // Winner B
+  87:['D','E','I','J','L'],  // Winner K
+};
 function pick3rd(round,mi,team,match,slotEl){
-  // Show ALL 12 third-place teams, ranked best-first; top 8 marked as qualified
-  const ranked=allThirdPlaceRanked();
+  // Determine this slot's match number to apply FIFA restrictions
+  const matchNum = R32_SCHEDULE[mi] ? R32_SCHEDULE[mi].m : null;
+  const eligibleGroups = (matchNum && SLOT_ELIGIBLE[matchNum]) ? SLOT_ELIGIBLE[matchNum] : GROUPS;
+  const qualified = qualifiedThirdGroups();
+  const ranked = allThirdPlaceRanked();
   const sel=document.createElement('select');
   sel.style.cssText='width:100%;font-size:11px;padding:3px;border:1px solid var(--blue-text);border-radius:4px;background:var(--bg);color:var(--text)';
   const blank=document.createElement('option');
-  blank.value='';blank.textContent='— pick best 3rd —';sel.appendChild(blank);
-  ranked.forEach((t,idx)=>{
+  blank.value='';blank.textContent='— pick 3rd (FIFA-eligible) —';sel.appendChild(blank);
+  // Show only the groups FIFA allows for THIS slot, ranked best-first
+  const slotTeams = ranked.filter(t=>eligibleGroups.includes(t.g));
+  slotTeams.forEach(t=>{
     const opt=document.createElement('option');
     opt.value=t.name;
     const gds=t.gd>0?'+'+t.gd:t.gd;
-    const mark=idx<8?'✅':'❌';
-    const rank=idx<8?('#'+(idx+1)):'OUT';
-    opt.textContent=`${mark} ${rank} Grp ${t.g}: ${t.name} (${t.pts}pts, ${gds})`;
+    const isQ=qualified.includes(t.g);
+    const mark=isQ?'✅':'❌';
+    opt.textContent=`${mark} Grp ${t.g}: ${t.name} (${t.pts}pts, ${gds})`;
+    if(!isQ) opt.style.color='var(--text3)';
     sel.appendChild(opt);
   });
-  // Note any groups whose 3rd place isn't decided yet
-  const tbd=GROUPS.filter(g=>!get3rdPlaceTeam(g));
+  // Groups eligible for this slot but not yet decided
+  const tbd=eligibleGroups.filter(g=>!get3rdPlaceTeam(g));
   tbd.forEach(g=>{
     const opt=document.createElement('option');
     opt.value='';opt.disabled=true;
