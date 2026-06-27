@@ -76,7 +76,12 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:11px 1
 .pos-badge{width:15px;height:15px;border-radius:50%;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .pos-1{background:var(--blue-bg);color:var(--blue-text)}
 .pos-2{background:var(--green-bg);color:var(--green-text)}
+.pos-3{background:var(--amber-bg);color:var(--amber-text)}
 .pos-o{background:var(--bg3);color:var(--text3)}
+.row-3 td{background:color-mix(in srgb,var(--amber-bg) 22%,transparent)}
+.q3-tag{font-size:8px;font-weight:600;border-radius:3px;padding:0 4px;margin-left:5px;white-space:nowrap;vertical-align:middle}
+.q3-in{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.q3-maybe{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)}
 .pts-cell{font-weight:700;color:var(--text)}
 .gd-pos{color:var(--green-text)}
 .gd-neg{color:var(--red-text)}
@@ -544,7 +549,7 @@ function buildGroupsUI(){
     });
     ms.appendChild(ml);card.appendChild(ms);
     const leg=document.createElement("div");leg.className="group-legend";
-    leg.innerHTML=`<div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>1st — qualifies</div><div class="leg-item"><div class="leg-dot" style="background:#639922"></div>2nd — qualifies</div>`;
+    leg.innerHTML=`<div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>1st — qualifies</div><div class="leg-item"><div class="leg-dot" style="background:#639922"></div>2nd — qualifies</div><div class="leg-item"><div class="leg-dot" style="background:#D9A441"></div>3rd — ▲ advancing / △ possible</div>`;
     card.appendChild(leg);
     grid.appendChild(card);
   });
@@ -579,13 +584,22 @@ function updateStandingsOnly(){
   });
 }
 function standingsRows(g,standings){
+  const qual3rd=qualifiedThirdGroups(); // groups whose 3rd is currently top-8
+  const thisQual=qual3rd.includes(g);
   return standings.map((t,i)=>{
-    const pc=i===0?"pos-1":i===1?"pos-2":"pos-o";
+    const pc=i===0?"pos-1":i===1?"pos-2":i===2?"pos-3":"pos-o";
     const gds=t.gd>0?"+"+t.gd:String(t.gd);
     const gc=t.gd>0?"gd-pos":t.gd<0?"gd-neg":"";
-    const rc=i===0?"row-1":i===1?"row-2":"";
+    const rc=i===0?"row-1":i===1?"row-2":i===2?"row-3":"";
+    // 3rd-place qualifying indicator
+    let tag="";
+    if(i===2){
+      tag = thisQual
+        ? `<span class="q3-tag q3-in" title="Currently among the 8 best 3rd-place teams">▲ advancing</span>`
+        : `<span class="q3-tag q3-maybe" title="3rd place — not currently in the top 8">△ possible</span>`;
+    }
     return `<tr class="${rc}"><td class="left"><span class="pos-badge ${pc}">${i+1}</span></td>
-      <td class="left"><div class="team-cell"><span class="tf">${t.flag}</span><span class="tn">${t.name}</span></div></td>
+      <td class="left"><div class="team-cell"><span class="tf">${t.flag}</span><span class="tn">${t.name}</span>${tag}</div></td>
       <td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
       <td>${t.gf}</td><td>${t.ga}</td>
       <td class="${gc}">${t.p>0?gds:"–"}</td><td class="pts-cell">${t.pts}</td></tr>`;
