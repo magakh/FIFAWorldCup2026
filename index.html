@@ -479,6 +479,13 @@ function computeStandings(g){
   teams.sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf||a.name.localeCompare(b.name));
   return teams;
 }
+function groupFinished(g){
+  // True only if all 6 group matches have scores entered
+  return groupMatchups(g).every((_,mi)=>{
+    const sc=state.scores[`${g}_${mi}`];
+    return sc&&sc.a!==""&&sc.b!==""&&sc.a!==null&&sc.b!==null;
+  });
+}
 
 /* ─── BUILD GROUP UI ─── */
 function buildGroupsUI(){
@@ -698,11 +705,14 @@ function renderBracket(){
         const win=state.bracket[`${ri}_${mi}`];
         slot.className="bs"+(win&&win===team.name?" bwin":"")+(team.name?" bclick":"");
         const mainLabel = team.name || team.label || "TBD";
+        // Flag teams from groups that haven't finished all matches yet (provisional)
+        const provisional = (team.name && team.group && !groupFinished(team.group))
+          ? `<span title="Group not finished — position may change" style="font-size:8px;color:var(--amber-text);background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:3px;padding:0 3px;margin-left:4px;white-space:nowrap">⏳ to play</span>` : "";
         const sub = (ri===0 && team.sublabel && team.sublabel!==mainLabel)
           ? `<span style="font-size:8px;color:var(--text3);display:block;line-height:1.3;margin-top:1px;font-style:normal">${team.sublabel}</span>` : "";
         const repick = (team.is3rd && team.name && ri===0)
           ? `<span class="repick3rd" title="Change 3rd-place pick" style="font-size:10px;color:var(--blue-text);cursor:pointer;padding:0 4px">⌄</span>` : "";
-        slot.innerHTML=`<span class="bf">${team.flag||""}</span><span class="bn${team.name?"":" empty"}" style="display:flex;flex-direction:column;gap:0">${mainLabel}${sub}</span>${repick}`;
+        slot.innerHTML=`<span class="bf">${team.flag||""}</span><span class="bn${team.name?"":" empty"}" style="display:flex;flex-direction:column;gap:0">${mainLabel}${provisional}${sub}</span>${repick}`;
         if(team.name) slot.onclick=()=>pickWinner(ri,mi,team.name,match);
         else if(team.is3rd && ri===0) slot.onclick=()=>pick3rd(ri,mi,team,match,slot);
         // Re-pick handler for filled 3rd slots
@@ -792,10 +802,9 @@ function pick3rd(round,mi,team,match,slotEl){
     const gds=t.gd>0?'+'+t.gd:t.gd;
     const used=usedElsewhere[t.name];
     if(used){
-      // Already placed in another slot — show but disable
-      opt.value='';
-      opt.disabled=true;
-      opt.textContent=`🔒 Grp ${t.g}: ${t.name} — already used`;
+      // Already placed elsewhere — still selectable; picking moves it here
+      opt.value=t.name;
+      opt.textContent=`🔒 Grp ${t.g}: ${t.name} — used (pick to move here)`;
       opt.style.color='var(--text3)';
     } else if(isQ){
       opt.value=t.name;
@@ -819,6 +828,10 @@ function pick3rd(round,mi,team,match,slotEl){
   });
   sel.onchange=()=>{
     if(sel.value){
+      // If this team is in another 3rd slot, clear it there first
+      Object.keys(state.bracket).forEach(k=>{
+        if(k.startsWith('3rd_')&&k!=='3rd_'+mi&&state.bracket[k]===sel.value) delete state.bracket[k];
+      });
       state.bracket['3rd_'+mi]=sel.value;
       autoSave();renderBracket();
     }
