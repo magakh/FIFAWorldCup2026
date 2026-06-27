@@ -496,7 +496,7 @@ function buildGroupsUI(){
     const played=matchups.filter((_,mi)=>{const sc=state.scores[`${g}_${mi}`];return sc&&sc.a!==""&&sc.b!=="";}).length;
     const card=document.createElement("div");card.className="group-card";
     const hdr=document.createElement("div");hdr.className="group-header";
-    hdr.innerHTML=`<span class="group-title">Group ${g}</span><span class="group-meta">${played}/6 played</span>`;
+    hdr.innerHTML=`<span class="group-title">Group ${g}</span><span class="group-meta" id="meta-${g}">${played}/6 played</span>`;
     card.appendChild(hdr);
     // standings table
     const tbl=document.createElement("table");tbl.className="standings";
@@ -507,18 +507,8 @@ function buildGroupsUI(){
       <th title="Goal Difference">GD</th><th title="Points">Pts</th>
     </tr></thead>`;
     const tbody=document.createElement("tbody");
-    standings.forEach((t,i)=>{
-      const tr=document.createElement("tr");tr.className=i===0?"row-1":i===1?"row-2":"";
-      const pc=i===0?"pos-1":i===1?"pos-2":"pos-o";
-      const gds=t.gd>0?"+"+t.gd:String(t.gd);
-      const gc=t.gd>0?"gd-pos":t.gd<0?"gd-neg":"";
-      tr.innerHTML=`<td class="left"><span class="pos-badge ${pc}">${i+1}</span></td>
-        <td class="left"><div class="team-cell"><span class="tf">${t.flag}</span><span class="tn">${t.name}</span></div></td>
-        <td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
-        <td>${t.gf}</td><td>${t.ga}</td>
-        <td class="${gc}">${t.p>0?gds:"–"}</td><td class="pts-cell">${t.pts}</td>`;
-      tbody.appendChild(tr);
-    });
+    tbody.id="standings-"+g;
+    tbody.innerHTML=standingsRows(g,standings);
     tbl.appendChild(tbody);card.appendChild(tbl);
     // match rows
     const ms=document.createElement("div");ms.className="matches-section";
@@ -566,9 +556,40 @@ document.querySelectorAll(".score-input").forEach(inp=>{
       if(!state.scores[key]) state.scores[key]={a:"",b:""};
       state.scores[key][side]=inp.value===""?"":inp.value;
       delete state.scores[key].autoFilled;
-      autoSave();buildGroupsUI();renderBracket();
+      // Clear the green auto-filled styling on this match's inputs
+      document.querySelectorAll(`.score-input[data-key="${key}"]`).forEach(el=>el.classList.remove('auto-filled'));
+      autoSave();
+      // Update standings live WITHOUT rebuilding inputs (preserves focus & scroll)
+      updateStandingsOnly();
+      renderBracket();
     });
   });
+}
+// Refreshes only the standings tables in-place, keeping score inputs & scroll intact
+function updateStandingsOnly(){
+  GROUPS.forEach(g=>{
+    const tbody=document.getElementById('standings-'+g);
+    if(!tbody) return;
+    tbody.innerHTML=standingsRows(g,computeStandings(g));
+    const meta=document.getElementById('meta-'+g);
+    if(meta){
+      const played=groupMatchups(g).filter((_,mi)=>{const sc=state.scores[`${g}_${mi}`];return sc&&sc.a!==""&&sc.b!=="";}).length;
+      meta.textContent=played+"/6 played";
+    }
+  });
+}
+function standingsRows(g,standings){
+  return standings.map((t,i)=>{
+    const pc=i===0?"pos-1":i===1?"pos-2":"pos-o";
+    const gds=t.gd>0?"+"+t.gd:String(t.gd);
+    const gc=t.gd>0?"gd-pos":t.gd<0?"gd-neg":"";
+    const rc=i===0?"row-1":i===1?"row-2":"";
+    return `<tr class="${rc}"><td class="left"><span class="pos-badge ${pc}">${i+1}</span></td>
+      <td class="left"><div class="team-cell"><span class="tf">${t.flag}</span><span class="tn">${t.name}</span></div></td>
+      <td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
+      <td>${t.gf}</td><td>${t.ga}</td>
+      <td class="${gc}">${t.p>0?gds:"–"}</td><td class="pts-cell">${t.pts}</td></tr>`;
+  }).join("");
 }
 
 /* ─── BRACKET ─── */
