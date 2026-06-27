@@ -780,12 +780,18 @@ function pick3rd(round,mi,team,match,slotEl){
   const slotTeams = ranked.filter(t=>eligibleGroups.includes(t.g));
   slotTeams.forEach(t=>{
     const opt=document.createElement('option');
-    opt.value=t.name;
-    const gds=t.gd>0?'+'+t.gd:t.gd;
     const isQ=qualified.includes(t.g);
-    const mark=isQ?'✅':'❌';
-    opt.textContent=`${mark} Grp ${t.g}: ${t.name} (${t.pts}pts, ${gds})`;
-    if(!isQ) opt.style.color='var(--text3)';
+    const gds=t.gd>0?'+'+t.gd:t.gd;
+    if(isQ){
+      opt.value=t.name;
+      opt.textContent=`✅ Grp ${t.g}: ${t.name} (${t.pts}pts, ${gds})`;
+    } else {
+      // Not in the top-8 qualifiers — show but disable (cannot pick)
+      opt.value='';
+      opt.disabled=true;
+      opt.textContent=`❌ Grp ${t.g}: ${t.name} (${t.pts}pts, ${gds}) — not qualified`;
+      opt.style.color='var(--text3)';
+    }
     sel.appendChild(opt);
   });
   // Groups eligible for this slot but not yet decided
