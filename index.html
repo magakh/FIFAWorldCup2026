@@ -772,6 +772,14 @@ function pick3rd(round,mi,team,match,slotEl){
   const eligibleGroups = (matchNum && SLOT_ELIGIBLE[matchNum]) ? SLOT_ELIGIBLE[matchNum] : GROUPS;
   const qualified = qualifiedThirdGroups();
   const ranked = allThirdPlaceRanked();
+  // Collect 3rd-place teams already placed in OTHER slots
+  const usedElsewhere = {};
+  Object.keys(state.bracket).forEach(k=>{
+    if(k.startsWith('3rd_')){
+      const usedMi = k.slice(4);
+      if(String(usedMi)!==String(mi)) usedElsewhere[state.bracket[k]] = usedMi;
+    }
+  });
   const sel=document.createElement('select');
   sel.style.cssText='width:100%;font-size:11px;padding:3px;border:1px solid var(--blue-text);border-radius:4px;background:var(--bg);color:var(--text)';
   const blank=document.createElement('option');
@@ -782,7 +790,14 @@ function pick3rd(round,mi,team,match,slotEl){
     const opt=document.createElement('option');
     const isQ=qualified.includes(t.g);
     const gds=t.gd>0?'+'+t.gd:t.gd;
-    if(isQ){
+    const used=usedElsewhere[t.name];
+    if(used){
+      // Already placed in another slot — show but disable
+      opt.value='';
+      opt.disabled=true;
+      opt.textContent=`🔒 Grp ${t.g}: ${t.name} — already used`;
+      opt.style.color='var(--text3)';
+    } else if(isQ){
       opt.value=t.name;
       opt.textContent=`✅ Grp ${t.g}: ${t.name} (${t.pts}pts, ${gds})`;
     } else {
