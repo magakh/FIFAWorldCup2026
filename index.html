@@ -442,12 +442,31 @@ function autoSave(){
   document.getElementById('saveIndicator').textContent="Saving…";
   saveTimer=setTimeout(()=>{saveToStorage();document.getElementById('saveIndicator').textContent="Saved ✓";},1200);
 }
+// Official FIFA R32 3rd-place assignments (locked after group stage, June 27 2026)
+const OFFICIAL_3RD = {
+  '3rd_2':'Paraguay',               // Germany (E1) vs Paraguay (D3)
+  '3rd_5':'Sweden',                 // France (I1) vs Sweden (F3)
+  '3rd_6':'Ecuador',                // Mexico (A1) vs Ecuador (E3)
+  '3rd_7':'DR Congo',               // England (L1) vs DR Congo (K3)
+  '3rd_8':'Senegal',                // Belgium (G1) vs Senegal (I3)
+  '3rd_9':'Bosnia & Herzegovina',   // USA (D1) vs Bosnia (B3)
+  '3rd_12':'Algeria',               // Switzerland (B1) vs Algeria (J3)
+  '3rd_14':'Ghana',                 // Colombia (K1) vs Ghana (L3)
+};
+function applyOfficial3rd(){
+  // Apply official 3rd-place picks once (only if user hasn't set their own)
+  if(state.official3rdApplied) return;
+  Object.entries(OFFICIAL_3RD).forEach(([k,v])=>{ if(!state.bracket[k]) state.bracket[k]=v; });
+  state.official3rdApplied=true;
+}
 function loadState(){
   try{
     const ls=localStorage.getItem(SAVE_KEY);
     if(ls){state=JSON.parse(ls);}
   }catch(e){}
+  if(!state.bracket) state.bracket={};
   applyRealScores();
+  applyOfficial3rd();
 }
 function shareLink(){
   saveToStorage();
@@ -615,7 +634,26 @@ function standingsRows(g,standings){
 }
 
 /* ─── BRACKET ─── */
-function getQualifiers(g){const s=computeStandings(g);return{first:s[0].name,second:s[1].name};}
+// Official final group positions (FIFA, after head-to-head tiebreakers applied)
+const OFFICIAL_QUALIFIERS = {
+  A:{first:"Mexico",second:"South Africa"},
+  B:{first:"Switzerland",second:"Canada"},
+  C:{first:"Brazil",second:"Morocco"},
+  D:{first:"USA",second:"Australia"},
+  E:{first:"Germany",second:"Ivory Coast"},
+  F:{first:"Netherlands",second:"Japan"},
+  G:{first:"Belgium",second:"Egypt"},
+  H:{first:"Spain",second:"Cape Verde"},
+  I:{first:"France",second:"Norway"},
+  J:{first:"Argentina",second:"Austria"},
+  K:{first:"Colombia",second:"Portugal"},
+  L:{first:"England",second:"Croatia"},
+};
+function getQualifiers(g){
+  // Use official positions if the group is finished (handles head-to-head tiebreakers)
+  if(OFFICIAL_QUALIFIERS[g] && groupFinished(g)) return OFFICIAL_QUALIFIERS[g];
+  const s=computeStandings(g);return{first:s[0].name,second:s[1].name};
+}
 /* ─── OFFICIAL FIFA R32 BRACKET (Matches 73-88) ───────────────── */
 const R32_SCHEDULE = [
   {m:73, utc:"2026-06-28T19:00:00Z", venue:"SoFi Stadium",        city:"Los Angeles, CA",  s1:{g:"A",p:2}, s2:{g:"B",p:2}},
@@ -903,8 +941,10 @@ function clearDown(round,mi){
   if(state.bracket[key]){delete state.bracket[key];clearDown(round+1,Math.floor(mi/2));}
 }
 function resetBracket(){
-  if(!confirm('Reset all knockout bracket picks?\n\nThis clears your simulation only — group-stage scores stay intact.')) return;
+  if(!confirm('Reset all knockout bracket picks?\n\nThis clears your simulation and restores the official 3rd-place matchups. Group-stage scores stay intact.')) return;
   state.bracket={};
+  state.official3rdApplied=false;
+  applyOfficial3rd();
   autoSave();
   renderBracket();
 }
