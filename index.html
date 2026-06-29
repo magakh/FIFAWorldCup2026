@@ -444,14 +444,14 @@ function autoSave(){
 }
 // Official FIFA R32 3rd-place assignments (locked after group stage, June 27 2026)
 const OFFICIAL_3RD = {
-  '3rd_2':'Paraguay',               // Germany (E1) vs Paraguay (D3)
-  '3rd_5':'Sweden',                 // France (I1) vs Sweden (F3)
-  '3rd_6':'Ecuador',                // Mexico (A1) vs Ecuador (E3)
-  '3rd_7':'DR Congo',               // England (L1) vs DR Congo (K3)
-  '3rd_8':'Senegal',                // Belgium (G1) vs Senegal (I3)
-  '3rd_9':'Bosnia & Herzegovina',   // USA (D1) vs Bosnia (B3)
-  '3rd_12':'Algeria',               // Switzerland (B1) vs Algeria (J3)
-  '3rd_14':'Ghana',                 // Colombia (K1) vs Ghana (L3)
+  '3rd_0':'Paraguay',               // M74 Germany (E1) vs Paraguay (D3)
+  '3rd_1':'Sweden',                 // M77 France (I1) vs Sweden (F3)
+  '3rd_6':'Bosnia & Herzegovina',   // M81 USA (D1) vs Bosnia (B3)
+  '3rd_7':'Senegal',                // M82 Belgium (G1) vs Senegal (I3)
+  '3rd_10':'Ecuador',               // M79 Mexico (A1) vs Ecuador (E3)
+  '3rd_11':'DR Congo',              // M80 England (L1) vs DR Congo (K3)
+  '3rd_14':'Algeria',               // M85 Switzerland (B1) vs Algeria (J3)
+  '3rd_15':'Ghana',                 // M87 Colombia (K1) vs Ghana (L3)
 };
 function applyOfficial3rd(){
   // Apply official 3rd-place picks once (only if user hasn't set their own)
@@ -656,34 +656,34 @@ function getQualifiers(g){
 }
 /* ─── OFFICIAL FIFA R32 BRACKET (Matches 73-88) ───────────────── */
 const R32_SCHEDULE = [
-  {m:73, utc:"2026-06-28T19:00:00Z", venue:"SoFi Stadium",        city:"Los Angeles, CA",  s1:{g:"A",p:2}, s2:{g:"B",p:2}},
-  {m:76, utc:"2026-06-29T17:00:00Z", venue:"NRG Stadium",         city:"Houston, TX",       s1:{g:"C",p:1}, s2:{g:"F",p:2}},
   {m:74, utc:"2026-06-29T20:30:00Z", venue:"Gillette Stadium",    city:"Boston, MA",        s1:{g:"E",p:1}, s2:{g:"X",p:3,label:"Best 3rd A/B/C/D/F"}},
-  {m:75, utc:"2026-06-30T01:00:00Z", venue:"Estadio BBVA",        city:"Monterrey, MX",     s1:{g:"F",p:1}, s2:{g:"C",p:2}},
-  {m:78, utc:"2026-06-30T17:00:00Z", venue:"AT&T Stadium",        city:"Dallas, TX",        s1:{g:"E",p:2}, s2:{g:"I",p:2}},
   {m:77, utc:"2026-06-30T21:00:00Z", venue:"MetLife Stadium",     city:"New York, NJ",      s1:{g:"I",p:1}, s2:{g:"X",p:3,label:"Best 3rd C/D/F/G/H"}},
-  {m:79, utc:"2026-07-01T01:00:00Z", venue:"Estadio Azteca",      city:"Mexico City, MX",   s1:{g:"A",p:1}, s2:{g:"X",p:3,label:"Best 3rd C/E/F/H/I"}},
-  {m:80, utc:"2026-07-01T16:00:00Z", venue:"Mercedes-Benz Stad.", city:"Atlanta, GA",       s1:{g:"L",p:1}, s2:{g:"X",p:3,label:"Best 3rd E/H/I/J/K"}},
-  {m:82, utc:"2026-07-01T20:00:00Z", venue:"Lumen Field",         city:"Seattle, WA",       s1:{g:"G",p:1}, s2:{g:"X",p:3,label:"Best 3rd A/E/H/I/J"}},
-  {m:81, utc:"2026-07-02T00:00:00Z", venue:"Levi's Stadium",      city:"San Francisco, CA", s1:{g:"D",p:1}, s2:{g:"X",p:3,label:"Best 3rd B/E/F/I/J"}},
+  {m:73, utc:"2026-06-28T19:00:00Z", venue:"SoFi Stadium",        city:"Los Angeles, CA",  s1:{g:"A",p:2}, s2:{g:"B",p:2}},
+  {m:75, utc:"2026-06-30T01:00:00Z", venue:"Estadio BBVA",        city:"Monterrey, MX",     s1:{g:"F",p:1}, s2:{g:"C",p:2}},
   {m:83, utc:"2026-07-02T19:00:00Z", venue:"BMO Field",           city:"Toronto, ON",       s1:{g:"K",p:2}, s2:{g:"L",p:2}},
   {m:84, utc:"2026-07-03T00:00:00Z", venue:"SoFi Stadium",        city:"Los Angeles, CA",   s1:{g:"H",p:1}, s2:{g:"J",p:2}},
-  {m:85, utc:"2026-07-03T03:00:00Z", venue:"BC Place",            city:"Vancouver, BC",     s1:{g:"B",p:1}, s2:{g:"X",p:3,label:"Best 3rd E/F/G/I/J"}},
+  {m:81, utc:"2026-07-02T00:00:00Z", venue:"Levi's Stadium",      city:"San Francisco, CA", s1:{g:"D",p:1}, s2:{g:"X",p:3,label:"Best 3rd B/E/F/I/J"}},
+  {m:82, utc:"2026-07-01T20:00:00Z", venue:"Lumen Field",         city:"Seattle, WA",       s1:{g:"G",p:1}, s2:{g:"X",p:3,label:"Best 3rd A/E/H/I/J"}},
+  {m:76, utc:"2026-06-29T17:00:00Z", venue:"NRG Stadium",         city:"Houston, TX",       s1:{g:"C",p:1}, s2:{g:"F",p:2}},
+  {m:78, utc:"2026-06-30T17:00:00Z", venue:"AT&T Stadium",        city:"Dallas, TX",        s1:{g:"E",p:2}, s2:{g:"I",p:2}},
+  {m:79, utc:"2026-07-01T01:00:00Z", venue:"Estadio Azteca",      city:"Mexico City, MX",   s1:{g:"A",p:1}, s2:{g:"X",p:3,label:"Best 3rd C/E/F/H/I"}},
+  {m:80, utc:"2026-07-01T16:00:00Z", venue:"Mercedes-Benz Stad.", city:"Atlanta, GA",       s1:{g:"L",p:1}, s2:{g:"X",p:3,label:"Best 3rd E/H/I/J/K"}},
   {m:86, utc:"2026-07-02T22:00:00Z", venue:"Estadio Akron",       city:"Guadalajara, MX",   s1:{g:"J",p:1}, s2:{g:"H",p:2}},
-  {m:87, utc:"2026-07-03T18:00:00Z", venue:"Arrowhead Stadium",   city:"Kansas City, MO",   s1:{g:"K",p:1}, s2:{g:"X",p:3,label:"Best 3rd D/E/I/J/L"}},
   {m:88, utc:"2026-07-03T21:00:00Z", venue:"BMO Field",           city:"Toronto, ON",       s1:{g:"D",p:2}, s2:{g:"G",p:2}},
+  {m:85, utc:"2026-07-03T03:00:00Z", venue:"BC Place",            city:"Vancouver, BC",     s1:{g:"B",p:1}, s2:{g:"X",p:3,label:"Best 3rd E/F/G/I/J"}},
+  {m:87, utc:"2026-07-03T18:00:00Z", venue:"Arrowhead Stadium",   city:"Kansas City, MO",   s1:{g:"K",p:1}, s2:{g:"X",p:3,label:"Best 3rd D/E/I/J/L"}},
 ];
 
 /* Later-round venues/dates (R16=M89-96, QF=M97-100, SF=M101-102, Final=M104) */
 const LATER_ROUNDS = {
   // Round of 16 (index 1) — order matches bracket pairing of R32 winners
   1: [
-    {utc:"2026-07-04T18:00:00Z", venue:"NRG Stadium",        city:"Houston, TX"},      // M90: W73 v W75
     {utc:"2026-07-04T22:00:00Z", venue:"Lincoln Financial",  city:"Philadelphia, PA"}, // M89: W74 v W77
-    {utc:"2026-07-05T21:00:00Z", venue:"MetLife Stadium",    city:"New York, NJ"},     // M91: W76 v W78
-    {utc:"2026-07-06T01:00:00Z", venue:"Estadio Azteca",     city:"Mexico City, MX"},  // M92: W79 v W80
+    {utc:"2026-07-04T18:00:00Z", venue:"NRG Stadium",        city:"Houston, TX"},      // M90: W73 v W75
     {utc:"2026-07-06T00:00:00Z", venue:"AT&T Stadium",       city:"Dallas, TX"},       // M93: W83 v W84
     {utc:"2026-07-07T01:00:00Z", venue:"Lumen Field",        city:"Seattle, WA"},      // M94: W81 v W82
+    {utc:"2026-07-05T21:00:00Z", venue:"MetLife Stadium",    city:"New York, NJ"},     // M91: W76 v W78
+    {utc:"2026-07-06T01:00:00Z", venue:"Estadio Azteca",     city:"Mexico City, MX"},  // M92: W79 v W80
     {utc:"2026-07-07T21:00:00Z", venue:"Mercedes-Benz Stad.",city:"Atlanta, GA"},      // M95: W86 v W88
     {utc:"2026-07-08T01:00:00Z", venue:"BC Place",           city:"Vancouver, BC"},    // M96: W85 v W87
   ],
