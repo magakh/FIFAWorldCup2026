@@ -164,15 +164,15 @@ img.emoji{height:1.2em;width:1.2em;margin:0 .05em 0 .1em;vertical-align:-0.15em;
 <div id="statusBar"></div>
 
 <div class="tabs">
-  <div class="tab active" onclick="switchTab('groups')">Group Stage</div>
-  <div class="tab" onclick="switchTab('bracket')">Knockout Bracket</div>
+  <div class="tab active" onclick="switchTab('bracket')">Knockout Bracket</div>
+  <div class="tab" onclick="switchTab('groups')">Group Stage</div>
 </div>
 
-<div class="view active" id="view-groups">
+<div class="view" id="view-groups">
   <div class="groups-grid" id="groupsGrid"></div>
 </div>
 
-<div class="view" id="view-bracket">
+<div class="view active" id="view-bracket">
   <div class="top-bar">
     <div style="font-size:12px;color:var(--text2)">Click a team to advance them. <span class="badge-sg">⚠ same group</span> = same-group rematch.</div>
     <button class="btn danger" onclick="resetBracket()">↺ Reset bracket picks</button>
@@ -492,7 +492,7 @@ function shareLink(){
   });
 }
 function switchTab(t){
-  document.querySelectorAll(".tab").forEach((el,i)=>el.classList.toggle("active",["groups","bracket"][i]===t));
+  document.querySelectorAll(".tab").forEach((el,i)=>el.classList.toggle("active",["bracket","groups"][i]===t));
   document.querySelectorAll(".view").forEach(el=>el.classList.remove("active"));
   document.getElementById("view-"+t).classList.add("active");
   if(t==="bracket") renderBracket();
