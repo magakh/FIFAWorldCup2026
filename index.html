@@ -459,6 +459,10 @@ const OFFICIAL_3RD = {
 const OFFICIAL_KO = {
   '0_2':'Canada',   // M73: South Africa 0-1 Canada (June 28)
 };
+// Scores for COMPLETED knockout matches only. Key "round_mi", value {a,b} matching slot t1/t2 order.
+const KO_SCORES = {
+  '0_2':{a:0,b:1},  // M73: South Africa 0 - 1 Canada
+};
 function applyOfficialKO(){
   // Advance the real winners (only if user hasn't overridden that match)
   if(!state.koResultsVersion) state.koResultsVersion=0;
@@ -796,7 +800,7 @@ function renderBracket(){
         box.appendChild(meta);
       }
 
-      [match.t1,match.t2].forEach(team=>{
+      [match.t1,match.t2].forEach((team,sideIdx)=>{
         const slot=document.createElement("div");
         const win=state.bracket[`${ri}_${mi}`];
         slot.className="bs"+(win&&win===team.name?" bwin":"")+(team.name?" bclick":"");
@@ -808,7 +812,15 @@ function renderBracket(){
           ? `<span style="font-size:8px;color:var(--text3);display:block;line-height:1.3;margin-top:1px;font-style:normal">${team.sublabel}</span>` : "";
         const repick = (team.is3rd && team.name && ri===0)
           ? `<span class="repick3rd" title="Change 3rd-place pick" style="font-size:10px;color:var(--blue-text);cursor:pointer;padding:0 4px">⌄</span>` : "";
-        slot.innerHTML=`<span class="bf">${team.flag||""}</span><span class="bn${team.name?"":" empty"}" style="display:flex;flex-direction:column;gap:0">${mainLabel}${provisional}${sub}</span>${repick}`;
+        // Show score only for COMPLETED knockout matches
+        const koSc = KO_SCORES[`${ri}_${mi}`];
+        let scoreHtml="";
+        if(koSc && team.name){
+          const val = sideIdx===0 ? koSc.a : koSc.b;
+          const isWin = win===team.name;
+          scoreHtml=`<span class="ko-score" style="margin-left:auto;font-weight:${isWin?'700':'500'};font-size:13px;color:${isWin?'var(--text)':'var(--text2)'};padding-left:8px">${val}</span>`;
+        }
+        slot.innerHTML=`<span class="bf">${team.flag||""}</span><span class="bn${team.name?"":" empty"}" style="display:flex;flex-direction:column;gap:0">${mainLabel}${provisional}${sub}</span>${repick}${scoreHtml}`;
         if(team.name) slot.onclick=()=>pickWinner(ri,mi,team.name,match);
         else if(team.is3rd && ri===0) slot.onclick=()=>pick3rd(ri,mi,team,match,slot);
         // Re-pick handler for filled 3rd slots
