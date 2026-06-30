@@ -459,18 +459,20 @@ const OFFICIAL_3RD = {
 const OFFICIAL_KO = {
   '0_0':'Paraguay', // M74: Germany 1-1 Paraguay (Paraguay 4-3 pens) — June 29
   '0_2':'Canada',   // M73: South Africa 0-1 Canada (June 28)
+  '0_3':'Morocco',  // M75: Netherlands 1-1 Morocco (Morocco 3-2 pens) — June 29
   '0_8':'Brazil',   // M76: Brazil 2-1 Japan (June 29)
 };
 // Scores for COMPLETED knockout matches only. Key "round_mi", value {a,b} matching slot t1/t2 order.
 const KO_SCORES = {
   '0_0':{a:1,b:1,pens:"3-4"}, // M74: Germany 1-1 Paraguay (Paraguay won 4-3 on pens)
   '0_2':{a:0,b:1},            // M73: South Africa 0 - 1 Canada
+  '0_3':{a:1,b:1,pens:"2-3"}, // M75: Netherlands 1-1 Morocco (Morocco won 3-2 on pens)
   '0_8':{a:2,b:1},            // M76: Brazil 2 - 1 Japan
 };
 function applyOfficialKO(){
   // Advance the real winners (only if user hasn't overridden that match)
   if(!state.koResultsVersion) state.koResultsVersion=0;
-  const VERSION=2; // bump when OFFICIAL_KO changes so updates re-apply
+  const VERSION=3; // bump when OFFICIAL_KO changes so updates re-apply
   if(state.koResultsVersion>=VERSION && !state.koForce) return;
   Object.entries(OFFICIAL_KO).forEach(([k,v])=>{ state.bracket[k]=v; });
   state.koResultsVersion=VERSION;
