@@ -457,16 +457,20 @@ const OFFICIAL_3RD = {
 // Keys are "round_matchindex" (round 0=R32, 1=R16, 2=QF, 3=SF, 4=Final). Value = winning team name.
 // mi mapping for R32 (round 0): M74=0,M77=1,M73=2,M75=3,M83=4,M84=5,M81=6,M82=7,M76=8,M78=9,M79=10,M80=11,M86=12,M88=13,M85=14,M87=15
 const OFFICIAL_KO = {
+  '0_0':'Paraguay', // M74: Germany 1-1 Paraguay (Paraguay 4-3 pens) — June 29
   '0_2':'Canada',   // M73: South Africa 0-1 Canada (June 28)
+  '0_8':'Brazil',   // M76: Brazil 2-1 Japan (June 29)
 };
 // Scores for COMPLETED knockout matches only. Key "round_mi", value {a,b} matching slot t1/t2 order.
 const KO_SCORES = {
-  '0_2':{a:0,b:1},  // M73: South Africa 0 - 1 Canada
+  '0_0':{a:1,b:1,pens:"3-4"}, // M74: Germany 1-1 Paraguay (Paraguay won 4-3 on pens)
+  '0_2':{a:0,b:1},            // M73: South Africa 0 - 1 Canada
+  '0_8':{a:2,b:1},            // M76: Brazil 2 - 1 Japan
 };
 function applyOfficialKO(){
   // Advance the real winners (only if user hasn't overridden that match)
   if(!state.koResultsVersion) state.koResultsVersion=0;
-  const VERSION=1; // bump when OFFICIAL_KO changes so updates re-apply
+  const VERSION=2; // bump when OFFICIAL_KO changes so updates re-apply
   if(state.koResultsVersion>=VERSION && !state.koForce) return;
   Object.entries(OFFICIAL_KO).forEach(([k,v])=>{ state.bracket[k]=v; });
   state.koResultsVersion=VERSION;
@@ -818,7 +822,12 @@ function renderBracket(){
         if(koSc && team.name){
           const val = sideIdx===0 ? koSc.a : koSc.b;
           const isWin = win===team.name;
-          scoreHtml=`<span class="ko-score" style="margin-left:auto;font-weight:${isWin?'700':'500'};font-size:13px;color:${isWin?'var(--text)':'var(--text2)'};padding-left:8px">${val}</span>`;
+          let penVal="";
+          if(koSc.pens){
+            const p=koSc.pens.split("-");
+            penVal=`<span style="font-size:9px;color:var(--text3);font-weight:400"> (${sideIdx===0?p[0]:p[1]})</span>`;
+          }
+          scoreHtml=`<span class="ko-score" style="margin-left:auto;font-weight:${isWin?'700':'500'};font-size:13px;color:${isWin?'var(--text)':'var(--text2)'};padding-left:8px">${val}${penVal}</span>`;
         }
         slot.innerHTML=`<span class="bf">${team.flag||""}</span><span class="bn${team.name?"":" empty"}" style="display:flex;flex-direction:column;gap:0">${mainLabel}${provisional}${sub}</span>${repick}${scoreHtml}`;
         if(team.name) slot.onclick=()=>pickWinner(ri,mi,team.name,match);
