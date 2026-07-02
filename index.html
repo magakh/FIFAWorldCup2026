@@ -461,9 +461,12 @@ const OFFICIAL_KO = {
   '0_1':'France',   // M77: France 3-0 Sweden (June 30)
   '0_2':'Canada',   // M73: South Africa 0-1 Canada (June 28)
   '0_3':'Morocco',  // M75: Netherlands 1-1 Morocco (Morocco 3-2 pens) — June 29
+  '0_6':'USA',      // M81: USA 2-0 Bosnia & Herzegovina (July 1)
+  '0_7':'Belgium',  // M82: Belgium 3-2 Senegal (July 1)
   '0_8':'Brazil',   // M76: Brazil 2-1 Japan (June 29)
   '0_9':'Norway',   // M78: Ivory Coast 1-2 Norway (June 30)
   '0_10':'Mexico',  // M79: Mexico 2-0 Ecuador (June 30)
+  '0_11':'England', // M80: England 2-1 DR Congo (July 1)
 };
 // Scores for COMPLETED knockout matches only. Key "round_mi", value {a,b} matching slot t1/t2 order.
 const KO_SCORES = {
@@ -471,14 +474,17 @@ const KO_SCORES = {
   '0_1':{a:3,b:0},            // M77: France 3 - 0 Sweden
   '0_2':{a:0,b:1},            // M73: South Africa 0 - 1 Canada
   '0_3':{a:1,b:1,pens:"2-3"}, // M75: Netherlands 1-1 Morocco (Morocco won 3-2 on pens)
+  '0_6':{a:2,b:0},            // M81: USA 2 - 0 Bosnia & Herzegovina
+  '0_7':{a:3,b:2},            // M82: Belgium 3 - 2 Senegal
   '0_8':{a:2,b:1},            // M76: Brazil 2 - 1 Japan
   '0_9':{a:1,b:2},            // M78: Ivory Coast 1 - 2 Norway
   '0_10':{a:2,b:0},           // M79: Mexico 2 - 0 Ecuador
+  '0_11':{a:2,b:1},           // M80: England 2 - 1 DR Congo
 };
 function applyOfficialKO(){
   // Advance the real winners (only if user hasn't overridden that match)
   if(!state.koResultsVersion) state.koResultsVersion=0;
-  const VERSION=4; // bump when OFFICIAL_KO changes so updates re-apply
+  const VERSION=5; // bump when OFFICIAL_KO changes so updates re-apply
   if(state.koResultsVersion>=VERSION && !state.koForce) return;
   Object.entries(OFFICIAL_KO).forEach(([k,v])=>{ state.bracket[k]=v; });
   state.koResultsVersion=VERSION;
