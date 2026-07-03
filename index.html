@@ -461,12 +461,15 @@ const OFFICIAL_KO = {
   '0_1':'France',   // M77: France 3-0 Sweden (June 30)
   '0_2':'Canada',   // M73: South Africa 0-1 Canada (June 28)
   '0_3':'Morocco',  // M75: Netherlands 1-1 Morocco (Morocco 3-2 pens) — June 29
+  '0_4':'Portugal', // M83: Portugal 2-1 Croatia (July 2)
+  '0_5':'Spain',    // M84: Spain 3-0 Austria (July 2)
   '0_6':'USA',      // M81: USA 2-0 Bosnia & Herzegovina (July 1)
   '0_7':'Belgium',  // M82: Belgium 3-2 Senegal (July 1)
   '0_8':'Brazil',   // M76: Brazil 2-1 Japan (June 29)
   '0_9':'Norway',   // M78: Ivory Coast 1-2 Norway (June 30)
   '0_10':'Mexico',  // M79: Mexico 2-0 Ecuador (June 30)
   '0_11':'England', // M80: England 2-1 DR Congo (July 1)
+  '0_14':'Switzerland', // M85: Switzerland 2-0 Algeria (July 2)
 };
 // Scores for COMPLETED knockout matches only. Key "round_mi", value {a,b} matching slot t1/t2 order.
 const KO_SCORES = {
@@ -474,17 +477,20 @@ const KO_SCORES = {
   '0_1':{a:3,b:0},            // M77: France 3 - 0 Sweden
   '0_2':{a:0,b:1},            // M73: South Africa 0 - 1 Canada
   '0_3':{a:1,b:1,pens:"2-3"}, // M75: Netherlands 1-1 Morocco (Morocco won 3-2 on pens)
+  '0_4':{a:2,b:1},            // M83: Portugal 2 - 1 Croatia
+  '0_5':{a:3,b:0},            // M84: Spain 3 - 0 Austria
   '0_6':{a:2,b:0},            // M81: USA 2 - 0 Bosnia & Herzegovina
   '0_7':{a:3,b:2},            // M82: Belgium 3 - 2 Senegal
   '0_8':{a:2,b:1},            // M76: Brazil 2 - 1 Japan
   '0_9':{a:1,b:2},            // M78: Ivory Coast 1 - 2 Norway
   '0_10':{a:2,b:0},           // M79: Mexico 2 - 0 Ecuador
   '0_11':{a:2,b:1},           // M80: England 2 - 1 DR Congo
+  '0_14':{a:2,b:0},           // M85: Switzerland 2 - 0 Algeria
 };
 function applyOfficialKO(){
   // Advance the real winners (only if user hasn't overridden that match)
   if(!state.koResultsVersion) state.koResultsVersion=0;
-  const VERSION=5; // bump when OFFICIAL_KO changes so updates re-apply
+  const VERSION=6; // bump when OFFICIAL_KO changes so updates re-apply
   if(state.koResultsVersion>=VERSION && !state.koForce) return;
   Object.entries(OFFICIAL_KO).forEach(([k,v])=>{ state.bracket[k]=v; });
   state.koResultsVersion=VERSION;
@@ -697,31 +703,31 @@ const R32_SCHEDULE = [
   {m:77, utc:"2026-06-30T21:00:00Z", venue:"MetLife Stadium",     city:"New York, NJ",      s1:{g:"I",p:1}, s2:{g:"X",p:3,label:"Best 3rd C/D/F/G/H"}},
   {m:73, utc:"2026-06-28T19:00:00Z", venue:"SoFi Stadium",        city:"Los Angeles, CA",  s1:{g:"A",p:2}, s2:{g:"B",p:2}},
   {m:75, utc:"2026-06-30T01:00:00Z", venue:"Estadio BBVA",        city:"Monterrey, MX",     s1:{g:"F",p:1}, s2:{g:"C",p:2}},
-  {m:83, utc:"2026-07-02T19:00:00Z", venue:"BMO Field",           city:"Toronto, ON",       s1:{g:"K",p:2}, s2:{g:"L",p:2}},
-  {m:84, utc:"2026-07-03T00:00:00Z", venue:"SoFi Stadium",        city:"Los Angeles, CA",   s1:{g:"H",p:1}, s2:{g:"J",p:2}},
+  {m:83, utc:"2026-07-02T23:00:00Z", venue:"BMO Field",           city:"Toronto, ON",       s1:{g:"K",p:2}, s2:{g:"L",p:2}},
+  {m:84, utc:"2026-07-02T19:00:00Z", venue:"SoFi Stadium",        city:"Los Angeles, CA",   s1:{g:"H",p:1}, s2:{g:"J",p:2}},
   {m:81, utc:"2026-07-02T00:00:00Z", venue:"Levi's Stadium",      city:"San Francisco, CA", s1:{g:"D",p:1}, s2:{g:"X",p:3,label:"Best 3rd B/E/F/I/J"}},
   {m:82, utc:"2026-07-01T20:00:00Z", venue:"Lumen Field",         city:"Seattle, WA",       s1:{g:"G",p:1}, s2:{g:"X",p:3,label:"Best 3rd A/E/H/I/J"}},
   {m:76, utc:"2026-06-29T17:00:00Z", venue:"NRG Stadium",         city:"Houston, TX",       s1:{g:"C",p:1}, s2:{g:"F",p:2}},
   {m:78, utc:"2026-06-30T17:00:00Z", venue:"AT&T Stadium",        city:"Dallas, TX",        s1:{g:"E",p:2}, s2:{g:"I",p:2}},
-  {m:79, utc:"2026-07-01T01:00:00Z", venue:"Estadio Azteca",      city:"Mexico City, MX",   s1:{g:"A",p:1}, s2:{g:"X",p:3,label:"Best 3rd C/E/F/H/I"}},
+  {m:79, utc:"2026-07-01T02:00:00Z", venue:"Estadio Azteca",      city:"Mexico City, MX",   s1:{g:"A",p:1}, s2:{g:"X",p:3,label:"Best 3rd C/E/F/H/I"}},
   {m:80, utc:"2026-07-01T16:00:00Z", venue:"Mercedes-Benz Stad.", city:"Atlanta, GA",       s1:{g:"L",p:1}, s2:{g:"X",p:3,label:"Best 3rd E/H/I/J/K"}},
-  {m:86, utc:"2026-07-02T22:00:00Z", venue:"Estadio Akron",       city:"Guadalajara, MX",   s1:{g:"J",p:1}, s2:{g:"H",p:2}},
-  {m:88, utc:"2026-07-03T21:00:00Z", venue:"BMO Field",           city:"Toronto, ON",       s1:{g:"D",p:2}, s2:{g:"G",p:2}},
+  {m:86, utc:"2026-07-03T22:00:00Z", venue:"Estadio Akron",       city:"Guadalajara, MX",   s1:{g:"J",p:1}, s2:{g:"H",p:2}},
+  {m:88, utc:"2026-07-03T18:00:00Z", venue:"BMO Field",           city:"Toronto, ON",       s1:{g:"D",p:2}, s2:{g:"G",p:2}},
   {m:85, utc:"2026-07-03T03:00:00Z", venue:"BC Place",            city:"Vancouver, BC",     s1:{g:"B",p:1}, s2:{g:"X",p:3,label:"Best 3rd E/F/G/I/J"}},
-  {m:87, utc:"2026-07-03T18:00:00Z", venue:"Arrowhead Stadium",   city:"Kansas City, MO",   s1:{g:"K",p:1}, s2:{g:"X",p:3,label:"Best 3rd D/E/I/J/L"}},
+  {m:87, utc:"2026-07-04T01:30:00Z", venue:"Arrowhead Stadium",   city:"Kansas City, MO",   s1:{g:"K",p:1}, s2:{g:"X",p:3,label:"Best 3rd D/E/I/J/L"}},
 ];
 
 /* Later-round venues/dates (R16=M89-96, QF=M97-100, SF=M101-102, Final=M104) */
 const LATER_ROUNDS = {
   // Round of 16 (index 1) — order matches bracket pairing of R32 winners
   1: [
-    {utc:"2026-07-04T22:00:00Z", venue:"Lincoln Financial",  city:"Philadelphia, PA"}, // M89: W74 v W77
-    {utc:"2026-07-04T18:00:00Z", venue:"NRG Stadium",        city:"Houston, TX"},      // M90: W73 v W75
-    {utc:"2026-07-06T00:00:00Z", venue:"AT&T Stadium",       city:"Dallas, TX"},       // M93: W83 v W84
-    {utc:"2026-07-07T01:00:00Z", venue:"Lumen Field",        city:"Seattle, WA"},      // M94: W81 v W82
-    {utc:"2026-07-05T21:00:00Z", venue:"MetLife Stadium",    city:"New York, NJ"},     // M91: W76 v W78
-    {utc:"2026-07-06T01:00:00Z", venue:"Estadio Azteca",     city:"Mexico City, MX"},  // M92: W79 v W80
-    {utc:"2026-07-07T21:00:00Z", venue:"Mercedes-Benz Stad.",city:"Atlanta, GA"},      // M95: W86 v W88
+    {utc:"2026-07-04T21:00:00Z", venue:"Lincoln Financial",  city:"Philadelphia, PA"}, // M89: W74 v W77
+    {utc:"2026-07-04T17:00:00Z", venue:"NRG Stadium",        city:"Houston, TX"},      // M90: W73 v W75
+    {utc:"2026-07-06T19:00:00Z", venue:"AT\u0026T Stadium",       city:"Dallas, TX"},       // M93: W83 v W84
+    {utc:"2026-07-07T00:00:00Z", venue:"Lumen Field",        city:"Seattle, WA"},      // M94: W81 v W82
+    {utc:"2026-07-05T20:00:00Z", venue:"MetLife Stadium",    city:"New York, NJ"},     // M91: W76 v W78
+    {utc:"2026-07-06T00:00:00Z", venue:"Estadio Azteca",     city:"Mexico City, MX"},  // M92: W79 v W80
+    {utc:"2026-07-07T16:00:00Z", venue:"Mercedes-Benz Stad.",city:"Atlanta, GA"},      // M95: W86 v W88
     {utc:"2026-07-08T01:00:00Z", venue:"BC Place",           city:"Vancouver, BC"},    // M96: W85 v W87
   ],
   // Quarter-finals (index 2)
