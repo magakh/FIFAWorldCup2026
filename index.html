@@ -469,7 +469,14 @@ const OFFICIAL_KO = {
   '0_9':'Norway',   // M78: Ivory Coast 1-2 Norway (June 30)
   '0_10':'Mexico',  // M79: Mexico 2-0 Ecuador (June 30)
   '0_11':'England', // M80: England 2-1 DR Congo (July 1)
+  '0_12':'Argentina', // M86: Argentina 3-2 Cape Verde (July 3)
+  '0_13':'Egypt',   // M88: Australia 1-1 Egypt (Egypt 4-2 pens) — July 3
   '0_14':'Switzerland', // M85: Switzerland 2-0 Algeria (July 2)
+  '0_15':'Colombia',    // M87: Colombia 1-0 Ghana (July 3)
+  // ─ Round of 16 ─
+  '1_0':'France',   // M89: Paraguay 0-1 France (July 4)
+  '1_1':'Morocco',  // M90: Canada 0-3 Morocco (July 4)
+  '1_4':'Norway',   // M91: Brazil 1-2 Norway (July 5) — BRAZIL OUT
 };
 // Scores for COMPLETED knockout matches only. Key "round_mi", value {a,b} matching slot t1/t2 order.
 const KO_SCORES = {
@@ -485,12 +492,19 @@ const KO_SCORES = {
   '0_9':{a:1,b:2},            // M78: Ivory Coast 1 - 2 Norway
   '0_10':{a:2,b:0},           // M79: Mexico 2 - 0 Ecuador
   '0_11':{a:2,b:1},           // M80: England 2 - 1 DR Congo
+  '0_12':{a:3,b:2},           // M86: Argentina 3 - 2 Cape Verde
+  '0_13':{a:1,b:1,pens:"2-4"},// M88: Australia 1-1 Egypt (Egypt won 4-2 on pens)
   '0_14':{a:2,b:0},           // M85: Switzerland 2 - 0 Algeria
+  '0_15':{a:1,b:0},           // M87: Colombia 1 - 0 Ghana
+  // ─ Round of 16 ─
+  '1_0':{a:0,b:1},            // M89: Paraguay 0 - 1 France
+  '1_1':{a:0,b:3},            // M90: Canada 0 - 3 Morocco
+  '1_4':{a:1,b:2},            // M91: Brazil 1 - 2 Norway
 };
 function applyOfficialKO(){
   // Advance the real winners (only if user hasn't overridden that match)
   if(!state.koResultsVersion) state.koResultsVersion=0;
-  const VERSION=6; // bump when OFFICIAL_KO changes so updates re-apply
+  const VERSION=7; // bump when OFFICIAL_KO changes so updates re-apply
   if(state.koResultsVersion>=VERSION && !state.koForce) return;
   Object.entries(OFFICIAL_KO).forEach(([k,v])=>{ state.bracket[k]=v; });
   state.koResultsVersion=VERSION;
