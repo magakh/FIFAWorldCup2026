@@ -477,6 +477,8 @@ const OFFICIAL_KO = {
   '1_0':'France',   // M89: Paraguay 0-1 France (July 4)
   '1_1':'Morocco',  // M90: Canada 0-3 Morocco (July 4)
   '1_4':'Norway',   // M91: Brazil 1-2 Norway (July 5) — BRAZIL OUT
+  '1_2':'Spain',    // M93: Portugal 0-1 Spain (July 6)
+  '1_3':'Belgium',  // M94: USA 1-4 Belgium (July 6)
   '1_5':'England',  // M92: Mexico 2-3 England (July 5)
 };
 // Scores for COMPLETED knockout matches only. Key "round_mi", value {a,b} matching slot t1/t2 order.
@@ -501,12 +503,14 @@ const KO_SCORES = {
   '1_0':{a:0,b:1},            // M89: Paraguay 0 - 1 France
   '1_1':{a:0,b:3},            // M90: Canada 0 - 3 Morocco
   '1_4':{a:1,b:2},            // M91: Brazil 1 - 2 Norway
+  '1_2':{a:0,b:1},            // M93: Portugal 0 - 1 Spain
+  '1_3':{a:1,b:4},            // M94: USA 1 - 4 Belgium
   '1_5':{a:2,b:3},            // M92: Mexico 2 - 3 England
 };
 function applyOfficialKO(){
   // Advance the real winners (only if user hasn't overridden that match)
   if(!state.koResultsVersion) state.koResultsVersion=0;
-  const VERSION=8; // bump when OFFICIAL_KO changes so updates re-apply
+  const VERSION=9; // bump when OFFICIAL_KO changes so updates re-apply
   if(state.koResultsVersion>=VERSION && !state.koForce) return;
   Object.entries(OFFICIAL_KO).forEach(([k,v])=>{ state.bracket[k]=v; });
   state.koResultsVersion=VERSION;
