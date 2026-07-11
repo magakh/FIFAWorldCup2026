@@ -522,12 +522,8 @@ const KO_SCORES = {
   '2_1':{a:2,b:1},            // M98: Spain 2 - 1 Belgium
 };
 function applyOfficialKO(){
-  // Advance the real winners (only if user hasn't overridden that match)
-  if(!state.koResultsVersion) state.koResultsVersion=0;
-  const VERSION=11; // bump when OFFICIAL_KO changes so updates re-apply
-  if(state.koResultsVersion>=VERSION && !state.koForce) return;
+  // Official results are facts — ALWAYS apply them so played games are populated
   Object.entries(OFFICIAL_KO).forEach(([k,v])=>{ state.bracket[k]=v; });
-  state.koResultsVersion=VERSION;
 }
 function applyOfficial3rd(){
   // Apply official 3rd-place picks once (only if user hasn't set their own)
@@ -1031,10 +1027,11 @@ function clearDown(round,mi){
   if(state.bracket[key]){delete state.bracket[key];clearDown(round+1,Math.floor(mi/2));}
 }
 function resetBracket(){
-  if(!confirm('Reset all knockout bracket picks?\n\nThis clears your simulation and restores the official 3rd-place matchups. Group-stage scores stay intact.')) return;
+  if(!confirm('Reset your simulation picks?\n\nOfficial results and 3rd-place matchups will be restored. Group-stage scores stay intact.')) return;
   state.bracket={};
   state.official3rdApplied=false;
   applyOfficial3rd();
+  applyOfficialKO();
   autoSave();
   renderBracket();
 }
